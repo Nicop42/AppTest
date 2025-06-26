@@ -2,31 +2,38 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dungeon Prompt Interface</title>
   <link rel="stylesheet" href="/test/css/dungeon.css" />
 </head>
 <body>
+  <div class="container">
+    <aside class="sidebar">
+      <div class="left-content-box">
+        <h4>🧠 Prompt Configuration</h4>
 
-  <div id="left-col">
-    <div class="left-content-box">
-      <h4>🧠 Prompt Configuration</h4>
-      <label for="positive">Positive Prompt</label>
-      <textarea id="positive" placeholder="Describe your prompt..."></textarea>
+        <label for="positive">Positive Prompt</label>
+        <textarea id="positive" placeholder="Describe your prompt..."></textarea>
 
-      <label for="negative">Negative Prompt</label>
-      <textarea id="negative" placeholder="What to avoid..."></textarea>
+        <label for="negative">Negative Prompt</label>
+        <textarea id="negative" placeholder="What to avoid..."></textarea>
 
-      <label for="seed">Seed</label>
-      <input type="text" id="seed" placeholder="Leave blank for random" />
-      <label><input type="checkbox" id="randomSeed" checked /> Use random seed</label>
+        <label for="seed">Seed</label>
+        <input type="text" id="seed" placeholder="Leave blank for random" />
 
-      <button id="generate">🎲 Generate</button>
-    </div>
-  </div>
+        <label class="checkbox-label">
+          <input type="checkbox" id="randomSeed" checked />
+          Use random seed
+        </label>
 
-  <div id="content">
-    <progress id="main-progress" value="0" max="100"></progress>
-    <div id="results"></div>
+        <button id="generate">🎲 Generate</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <progress id="main-progress" value="0" max="100"></progress>
+      <div id="results"></div>
+    </main>
   </div>
 
   <script src="/test/js/dungeon.js"></script>

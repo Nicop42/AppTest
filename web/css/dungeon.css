@@ -1,95 +1,217 @@
-/* Reset */
-* {
+/* Font moderno + icone */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined');
+
+:root {
+  --bg-color: #ffffff;
+  --text-color: #2e2e2e;
+  --highlight: #ffe600;
+  --border-color: #ddd;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+*,
+*::before,
+*::after {
   box-sizing: border-box;
+}
+
+/* Struttura a colonna */
+html, body {
+  height: 100%;
   margin: 0;
   padding: 0;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: system-ui, sans-serif;
 }
 
+/* Struttura verticale */
 body {
-  font-family: Arial, sans-serif;
-  background-color: #f3f3f3;
-  color: #222;
-  padding: 10px;
-}
-
-/* Layout */
-.container {
   display: flex;
-  gap: 20px;
-  flex-wrap: wrap;
+  flex-direction: column;
 }
 
-/* Sidebar */
-.sidebar {
-  flex: 1 1 300px;
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 8px;
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-.left-content-box h4 {
-  margin-bottom: 15px;
+/* La pagina principale (form + risultati + gallery) */
+.page {
+  flex: 1 0 auto;
+  padding: 1rem 1rem 80px;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
-label {
+
+/* Sidebar + contenuto */
+
+
+/* Footer fisso in fondo */
+.page-footer {
+  background-color: var(--highlight);
+  min-height: 40px;
+}
+
+
+
+.left-content-box h1 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+label{
   display: block;
-  margin: 12px 0 4px;
+  margin: 0.5rem 0;
 }
-
 textarea,
 input[type="text"] {
   width: 100%;
-  padding: 10px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
   resize: vertical;
+  font-size: 1rem;
+  background: #fffded;
 }
 
-.checkbox-label {
+button {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 10px 0;
-}
-
-button#generate {
-  margin-top: 15px;
-  padding: 12px;
-  width: 100%;
-  background-color: #4caf50;
-  color: white;
-  font-weight: bold;
+  gap: 0.5rem;
+  background: var(--highlight);
   border: none;
-  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
   cursor: pointer;
+  transition: background 0.2s;
+  
 }
 
-button#generate:hover {
-  background-color: #45a049;
+button:hover {
+  background: #ffef66;
 }
 
-/* Main content */
-.main-content {
-  flex: 2 1 400px;
-  background-color: #fff;
-  padding: 20px;
-  border-radius: 8px;
+button .material-symbols-outlined {
+  font-size: 1.2rem;
+  vertical-align: middle;
 }
+
+
 
 progress {
   width: 100%;
-  height: 20px;
-  margin-bottom: 20px;
+  height: 12px;
+  margin-bottom: 1rem;
+  accent-color: var(--highlight);
 }
 
-/* Responsive behavior */
-@media (max-width: 768px) {
-  .container {
-    flex-direction: column;
-  }
+/* FORM */
+#prompt-form {
+ 
+  margin: 0 auto 2rem auto;
+}
 
-  .sidebar,
-  .main-content {
-    width: 100%;
-  }
+/* RISULTATI */
+#results {
+  min-height: 200px; /* per dare ingombro minimo */
+  padding: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  background-color: #f9f9f9;
+  margin-bottom: 2rem;
+}
+
+/* GALLERIA */
+#gallery {
+  display: none; /* nascosta di default */
+  margin-top: 50px;
+  padding-top: 50px;
+  border-top: 1px solid #ddd;
+}
+
+#gallery h2{
+  margin-top: 0;
+}
+
+.gallery-item {
+  padding-top: 1rem;
+  margin-bottom: 1.5rem;
+  border-top: 1px solid #ddd;
+}
+
+
+/* Pulsanti */
+button,
+.download-btn {
+  background-color: var(--highlight);
+  border: none;
+  padding: 0.6em 1em;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #000;
+  text-decoration: none;
+}
+.download-btn::before {
+  content: "download";
+  font-family: 'Material Symbols Outlined';
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-size: 20px;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+button:hover,
+.download-btn:hover {
+  filter: brightness(1.1);
+}
+
+/* Immagini */
+.image-block{
+  display: flex;
+  gap:10px;
+  align-items: flex-start;
+}
+.image-block img,
+.gallery-img {
+  border-radius: 8px;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+}
+
+.gallery-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 1rem;
+}
+
+.gallery-img {
+  width:100%;
+  max-width: 200px;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+/* FOOTER fisso in fondo */
+.page-footer {
+  background-color: var(--highlight);
+  min-height: 40px;
+  flex-shrink: 0;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
 }

@@ -1,41 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dungeon Prompt Interface</title>
-  <link rel="stylesheet" href="/test/css/dungeon.css" />
-</head>
-<body>
-  <div class="container">
-    <aside class="sidebar">
-      <div class="left-content-box">
-        <h4>🧠 Prompt Configuration</h4>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prompting Heritage</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+      rel="stylesheet"
+    />
 
-        <label for="positive">Positive Prompt</label>
-        <textarea id="positive" placeholder="Describe your prompt..."></textarea>
+    <link rel="stylesheet" href="/test/css/dungeon.css" />
+  </head>
+  <body>
+    <div class="page">
+      <!-- Form di configurazione -->
+      <form
+        class="sidebar"
+        id="prompt-form"
+        aria-labelledby="prompt-config-heading"
+      >
+        <div class="left-content-box">
+          <h1 id="prompt-config-heading">Crea la tua immagine</h1>
 
-        <label for="negative">Negative Prompt</label>
-        <textarea id="negative" placeholder="What to avoid..."></textarea>
+          <label for="positive">Positive Prompt</label>
+          <input
+            type="text"
+            id="positive"
+            placeholder="Describe your prompt..."
+            aria-describedby="positive-desc"
+          />
+          <p id="positive-desc" class="visually-hidden">
+            Describe the desired elements of your prompt.
+          </p>
 
-        <label for="seed">Seed</label>
-        <input type="text" id="seed" placeholder="Leave blank for random" />
+          <label for="negative">Negative Prompt</label>
+          <input
+            type="text"
+            id="negative"
+            placeholder="What to avoid..."
+            aria-describedby="negative-desc"
+          />
+          <p id="negative-desc" class="visually-hidden">
+            Describe elements to exclude from the result.
+          </p>
 
-        <label class="checkbox-label">
-          <input type="checkbox" id="randomSeed" checked />
-          Use random seed
-        </label>
+          <div hidden>
+            <label for="seed">Seed</label>
+            <input
+              type="text"
+              id="seed"
+              placeholder="Leave blank for random"
+              aria-describedby="seed-desc"
+            />
+            <p id="seed-desc">
+              Enter a number to use as a seed or leave blank to randomize.
+            </p>
 
-        <button id="generate">🎲 Generate</button>
-      </div>
-    </aside>
+            <label class="checkbox-label" for="randomSeed">
+              <input type="checkbox" id="randomSeed" checked />
+              Use random seed
+            </label>
+          </div>
 
-    <main class="main-content">
-      <progress id="main-progress" value="0" max="100"></progress>
-      <div id="results"></div>
-    </main>
-  </div>
+          <button id="generate" type="button" aria-label="Generate prompt">
+            <span class="material-symbols-outlined">auto_awesome</span>
+            Generate
+          </button>
+        </div>
+      </form>
 
-  <script src="/test/js/dungeon.js"></script>
-</body>
+      <!-- Risultati -->
+      <main class="main-content" role="main">
+        <label for="main-progress" class="visually-hidden">Progress</label>
+        <progress
+          id="main-progress"
+          value="0"
+          max="100"
+          aria-live="polite"
+          aria-valuetext="0 percent"
+        ></progress>
+
+        <section id="results" aria-live="polite" aria-atomic="true">
+          <!-- Output generato -->
+        </section>
+        <section id="gallery">
+          <h2>Immagini precedenti</h2>
+          <div id="gallery-images"></div>
+        </section>
+      </main>
+    </div>
+    <footer class="page-footer"></footer>
+
+    <script src="/test/js/dungeon.js"></script>
+  </body>
 </html>

@@ -79,5 +79,31 @@ async def handle_prompt(request):
         print("❌ Error in /prompt:", str(e))
         return web.json_response({"error": str(e)}, status=500)
 
+@server.PromptServer.instance.routes.get("/history")
+async def get_history(request):
+    try:
+        client_id = request.query.get("client_id")
+        if not client_id:
+            return web.json_response({"error": "Missing client_id"}, status=400)
+
+        session_dir = os.path.join(OUTPUT_DIR, "gradio", f"session_{client_id[:8]}")
+        if not os.path.exists(session_dir):
+            return web.json_response({"images": []})
+
+        images = []
+        for fname in sorted(os.listdir(session_dir)):
+            if fname.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
+                images.append({
+                    "url": f"/output/gradio/session_{client_id[:8]}/{fname}",
+                    "filename": fname
+                })
+
+        return web.json_response({"images": images})
+
+    except Exception as e:
+        print("❌ Error in /history:", str(e))
+        return web.json_response({"error": str(e)}, status=500)
+
+
 # ✅ Required for ComfyUI to recognize this as a custom module
 __all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']

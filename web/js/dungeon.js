@@ -19,10 +19,16 @@
     progressbar.value = val;
   };
 
+  let cachedWorkflow = null;
+  let lastPositive = "";
+  let lastNegative = "";
+
   async function loadWorkflow() {
+    if (cachedWorkflow) return cachedWorkflow;
     const res = await fetch("/test/js/fastSDXLtext2img.json");
     if (!res.ok) throw new Error(`Workflow fetch failed: ${res.status}`);
-    return await res.json();
+    cachedWorkflow = await res.json();
+    return cachedWorkflow;
   }
 
   async function queuePrompt(prompt) {
@@ -47,6 +53,9 @@
         : parseInt(seedInput.value) || SEED();
       seedInput.value = seedVal;
 
+      lastPositive = pos;
+      lastNegative = neg;
+
       const wf = await loadWorkflow();
 
       wf["3"]["inputs"]["seed"] = seedVal;
@@ -61,9 +70,16 @@
         .replace(/[:T]/g, "-");
       wf["28"]["inputs"]["filename_prefix"] = `${sessionFolder}/${timestamp}`;
 
-      await queuePrompt(wf);
-      results.innerHTML = `<p>🌀 Processing image...</p>`;
+      const loading = document.createElement("p");
+      loading.id = "loading-text";
+      loading.textContent = "🌀 Processing image...";
+
+      const existingText = results.querySelector("#loading-text");
+      if (existingText) existingText.remove();
+      results.appendChild(loading);
+
       updateProgress(1, 0);
+      await queuePrompt(wf);
     } catch (e) {
       console.error(e);
       alert(`Failed to generate: ${e.message}`);
@@ -88,20 +104,26 @@
       }
 
       if (msg.type === "executed" && msg.data?.output?.images) {
-        const current = results.innerHTML;
+        const imageBlock = results.querySelector(".image-block");
 
-        // Insert previous result into gallery (if it exists)
-        if (current && current.includes("image-block")) {
+        if (imageBlock) {
           console.log("📦 Moving previous image to gallery");
-          gallery.insertAdjacentHTML(
-            "afterbegin",
-            `<div class="gallery-item">${current}</div>`
-          );
           $("#gallery").style.display = "block";
+
+          const galleryItem = document.createElement("div");
+          galleryItem.className = "gallery-item";
+
+          const promptInfo = document.createElement("div");
+          promptInfo.className = "prompt-info";
+          promptInfo.innerHTML = `<p><strong>Positive:</strong> ${lastPositive}</p><p><strong>Negative:</strong> ${lastNegative}</p>`;
+
+          galleryItem.appendChild(imageBlock);
+          galleryItem.appendChild(promptInfo);
+          gallery.insertBefore(galleryItem, gallery.firstChild);
         }
 
-        // Clear and show new image
-        results.innerHTML = "";
+        const loadingText = results.querySelector("#loading-text");
+        if (loadingText) loadingText.remove();
 
         for (let img of msg.data.output.images) {
           const url = `/output/${img.subfolder}/${img.filename}?rand=${Math.random()}`;
@@ -130,7 +152,6 @@
     ws.addEventListener("error", (err) => {
       console.warn("❌ WebSocket connection failed:", err);
     });
-
   } catch (err) {
     console.warn("❌ Could not set up WebSocket:", err);
   }

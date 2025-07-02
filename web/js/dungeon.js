@@ -20,8 +20,7 @@
   };
 
   let cachedWorkflow = null;
-  let lastPositive = "";
-  let lastNegative = "";
+  let promptQueue = [];
 
   async function loadWorkflow() {
     if (cachedWorkflow) return cachedWorkflow;
@@ -48,13 +47,8 @@
     try {
       const pos = positiveInput.value.trim();
       const neg = negativeInput.value.trim();
-      const seedVal = isRandomInput.checked
-        ? SEED()
-        : parseInt(seedInput.value) || SEED();
+      const seedVal = isRandomInput.checked ? SEED() : parseInt(seedInput.value) || SEED();
       seedInput.value = seedVal;
-
-      lastPositive = pos;
-      lastNegative = neg;
 
       const wf = await loadWorkflow();
 
@@ -64,10 +58,7 @@
       wf["33"]["inputs"]["text_g"] = neg;
       wf["33"]["inputs"]["text_l"] = neg;
 
-      const timestamp = new Date()
-        .toISOString()
-        .slice(0, 19)
-        .replace(/[:T]/g, "-");
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
       wf["28"]["inputs"]["filename_prefix"] = `${sessionFolder}/${timestamp}`;
 
       const loading = document.createElement("p");
@@ -79,6 +70,8 @@
       results.appendChild(loading);
 
       updateProgress(1, 0);
+
+      promptQueue.push({ pos, neg });
       await queuePrompt(wf);
     } catch (e) {
       console.error(e);
@@ -92,9 +85,7 @@
 
   try {
     const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const ws = new WebSocket(
-      `${wsProtocol}//${window.location.host}/ws?clientId=${client_id}`
-    );
+    const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws?clientId=${client_id}`);
 
     ws.addEventListener("message", async (e) => {
       const msg = JSON.parse(e.data);
@@ -115,7 +106,10 @@
 
           const promptInfo = document.createElement("div");
           promptInfo.className = "prompt-info";
-          promptInfo.innerHTML = `<p><strong>Positive:</strong> ${lastPositive}</p><p><strong>Negative:</strong> ${lastNegative}</p>`;
+
+          const prompts = promptQueue.shift() || { pos: "", neg: "" };
+
+          promptInfo.innerHTML = `<p><strong>Positive:</strong> ${prompts.pos}</p><p><strong>Negative:</strong> ${prompts.neg}</p>`;
 
           galleryItem.appendChild(imageBlock);
           galleryItem.appendChild(promptInfo);
@@ -155,5 +149,4 @@
   } catch (err) {
     console.warn("❌ Could not set up WebSocket:", err);
   }
-
 })(window, document);

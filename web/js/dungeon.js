@@ -41,21 +41,70 @@
   }
 
   /* STILI */
-  // Mappa degli stili con i relativi prompt
+  // Mappa degli stili con i relativi prompt e nomi
   const stylePrompts = {
-    style1: "digital art, highly detailed, vibrant colors, 4k, trending on artstation",
-    style2: "oil painting, impasto brushstrokes, rich textures, classical art style",
-    style3: "anime style, cel-shaded, vibrant colors, sharp lines, studio ghibli inspired",
-    style4: "pencil sketch, hatching, detailed linework, monochrome",
-    style5: "watercolor painting, soft edges, pastel colors, dreamy atmosphere",
-    style6: "cyberpunk, neon lights, futuristic, rain-soaked streets, 4k",
-    style7: "low poly, geometric shapes, minimalist, vibrant colors",
-    style8: "steampunk, brass and copper, gears, vintage aesthetic",
-    style9: "pixel art, 8-bit, retro gaming style, vibrant colors",
-    style10: "surrealism, dreamlike, impossible architecture, vibrant colors",
-    style11: "chalk drawing, on blackboard, dust and chalk particles",
-    style12: "claymation, stop motion, soft lighting, tactile textures"
+    style1: {
+      prompt: "digital art, highly detailed, vibrant colors, 4k, trending on artstation",
+      name: "Digital Art"
+    },
+    style2: {
+      prompt: "oil painting, impasto brushstrokes, rich textures, classical art style",
+      name: "Oil Painting"
+    },
+    style3: {
+      prompt: "anime style, cel-shaded, vibrant colors, sharp lines, studio ghibli inspired",
+      name: "Anime Style"
+    },
+    style4: {
+      prompt: "pencil sketch, hatching, detailed linework, monochrome",
+      name: "Pencil Sketch"
+    },
+    style5: {
+      prompt: "watercolor painting, soft edges, pastel colors, dreamy atmosphere",
+      name: "Watercolor"
+    },
+    style6: {
+      prompt: "cyberpunk, neon lights, futuristic, rain-soaked streets, 4k",
+      name: "Cyberpunk"
+    },
+    style7: {
+      prompt: "low poly, geometric shapes, minimalist, vibrant colors",
+      name: "Low Poly"
+    },
+    style8: {
+      prompt: "steampunk, brass and copper, gears, vintage aesthetic",
+      name: "Steampunk"
+    },
+    style9: {
+      prompt: "pixel art, 8-bit, retro gaming style, vibrant colors",
+      name: "Pixel Art"
+    },
+    style10: {
+      prompt: "surrealism, dreamlike, impossible architecture, vibrant colors",
+      name: "Surrealism"
+    },
+    style11: {
+      prompt: "chalk drawing, on blackboard, dust and chalk particles",
+      name: "Chalk Drawing"
+    },
+    style12: {
+      prompt: "claymation, stop motion, soft lighting, tactile textures",
+      name: "Claymation"
+    }
   };
+  
+  // Function to update style names in the UI
+  function updateStyleNames() {
+    Object.entries(stylePrompts).forEach(([styleId, styleData]) => {
+      const styleElement = document.querySelector(`.style-btn[data-stile="${styleId}"] .nome-stile`);
+      if (styleElement) {
+        styleElement.textContent = styleData.name;
+      }
+    });
+  }
+  
+  // Initialize style names when the page loads
+  document.addEventListener('DOMContentLoaded', updateStyleNames);
 
   toggleStili.addEventListener("click", (e) => {
     e.preventDefault();
@@ -69,45 +118,53 @@
     }
   });
 
+  // Keep track of selected styles
+  const selectedStyles = new Set();
+  
   document.querySelectorAll(".style-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const stileBlock = btn.closest(".stile-block");
       const isActive = stileBlock.classList.contains("active");
-
-      // Rimuove "active" da tutti i blocchi stile
-      document
-        .querySelectorAll(".stile-block")
-        .forEach((s) => s.classList.remove("active"));
-
-      // Se non era già attivo, attivalo e aggiungi lo stile al prompt
+      const styleId = btn.dataset.stile;
+      const styleData = stylePrompts[styleId];
+      
+      if (!styleData) return; // Skip if style not found
+      
+      // Toggle the active class
+      stileBlock.classList.toggle("active");
+      
+      // Update the selected styles set
       if (!isActive) {
-        stileBlock.classList.add("active");
-        const styleId = btn.dataset.stile;
-        const styleText = stylePrompts[styleId] || "";
-        
-        // Aggiungi lo stile al prompt positivo
-        if (positiveInput.value.trim() === "") {
-          positiveInput.value = styleText;
-        } else {
-          // Se c'è già del testo, aggiungi lo stile dopo una virgola
-          positiveInput.value = `${positiveInput.value}, ${styleText}`;
-        }
-        
-        console.log(`Stile selezionato: ${styleId}`);
+        selectedStyles.add(styleId);
+        console.log(`Stile selezionato: ${styleData.name}`);
       } else {
-        // Se era già attivo e lo stiamo disattivando, rimuovi il testo dello stile se presente
-        const styleId = btn.dataset.stile;
-        const styleText = stylePrompts[styleId] || "";
-        if (styleText) {
-          // Rimuovi il testo dello stile dal prompt
-          positiveInput.value = positiveInput.value
-            .replace(`, ${styleText}`, '')
-            .replace(styleText, '')
-            .replace(/^\s*,\s*/, '')  // Rimuove virgole all'inizio
-            .replace(/,\s*$/, '')      // Rimuove virgole alla fine
-            .replace(/\s{2,}/g, ' ');  // Rimuove spazi multipli
-        }
+        selectedStyles.delete(styleId);
+        console.log(`Stile rimosso: ${styleData.name}`);
       }
+      
+      // Get the current prompt without any style content
+      let currentPrompt = positiveInput.value;
+      
+      // Remove all style prompts that are not in the selected styles
+      Object.entries(stylePrompts).forEach(([id, data]) => {
+        if (currentPrompt.includes(data.prompt)) {
+          // Remove the prompt and any surrounding commas and spaces
+          const regex = new RegExp(`\\s*,\\s*${data.prompt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}|${data.prompt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*,?\\s*`, 'g');
+          currentPrompt = currentPrompt.replace(regex, '').trim();
+        }
+      });
+      
+      // Add back all selected styles
+      let newPrompt = currentPrompt;
+      selectedStyles.forEach(id => {
+        const style = stylePrompts[id];
+        if (style && style.prompt) {
+          newPrompt = newPrompt ? `${newPrompt}, ${style.prompt}` : style.prompt;
+        }
+      });
+      
+      // Update the input field
+      positiveInput.value = newPrompt;
     });
   });
 
@@ -115,7 +172,7 @@
 
   /* -------------------------- */
   /* Variabili dei settaggi */
-  // Slider dinamico
+  // 
   const qualitySlider = document.getElementById("filter-quality");
   const definitionSlider = document.getElementById("filter-definition");
   const qualityVal = document.getElementById("quality-value");

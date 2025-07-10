@@ -1,0 +1,176 @@
+{
+  "3": {
+    "inputs": {
+      "seed": 554932836532794,
+      "steps": 10,
+      "cfg": 1.5,
+      "sampler_name": "dpmpp_2m_sde",
+      "scheduler": "exponential",
+      "denoise": 1,
+      "model": [
+        "4",
+        0
+      ],
+      "positive": [
+        "30",
+        0
+      ],
+      "negative": [
+        "33",
+        0
+      ],
+      "latent_image": [
+        "5",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "4": {
+    "inputs": {
+      "ckpt_name": "dreamshaperXL_v21TurboDPMSDE.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Load Checkpoint"
+    }
+  },
+  "5": {
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "Empty Latent Image"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "3",
+        0
+      ],
+      "vae": [
+        "39",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "28": {
+    "inputs": {
+      "filename_prefix": "gradio/2025-06-09-9-25-36 img",
+      "images": [
+        "41",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "30": {
+    "inputs": {
+      "width": 4096,
+      "height": 4096,
+      "crop_w": 0,
+      "crop_h": 0,
+      "target_width": 4096,
+      "target_height": 4096,
+      "text_g": "A portrait of Michel de Certeau, his figure clear and intact, surrounded by a semi-abstract background. Behind him, fragmented maps intertwine with faint, handwritten notes and blurred silhouettes of an urban landscape. The colors are soft and muted: pastel blues, faded greens, light earth tones, and pale yellows, layered with delicate semi-transparent textures. Gentle brushstrokes and subtle overlays create a sense of fluidity and movement. Light glitch effects barely disturb the background, suggesting fragmented perception without distorting the figure. The atmosphere is ambient, diffused, evoking quiet resistance, daily improvisation, and the ephemeral nature of everyday life.",
+      "text_l": "A portrait of Michel de Certeau, his figure clear and intact, surrounded by a semi-abstract background. Behind him, fragmented maps intertwine with faint, handwritten notes and blurred silhouettes of an urban landscape. The colors are soft and muted: pastel blues, faded greens, light earth tones, and pale yellows, layered with delicate semi-transparent textures. Gentle brushstrokes and subtle overlays create a sense of fluidity and movement. Light glitch effects barely disturb the background, suggesting fragmented perception without distorting the figure. The atmosphere is ambient, diffused, evoking quiet resistance, daily improvisation, and the ephemeral nature of everyday life.",
+      "clip": [
+        "63",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncodeSDXL",
+    "_meta": {
+      "title": "CLIPTextEncodeSDXL"
+    }
+  },
+  "33": {
+    "inputs": {
+      "width": 4096,
+      "height": 4096,
+      "crop_w": 0,
+      "crop_h": 0,
+      "target_width": 4096,
+      "target_height": 4096,
+      "text_g": "beard",
+      "text_l": "beard",
+      "clip": [
+        "63",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncodeSDXL",
+    "_meta": {
+      "title": "CLIPTextEncodeSDXL"
+    }
+  },
+  "39": {
+    "inputs": {
+      "vae_name": "sdxl_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "40": {
+    "inputs": {
+      "model_name": "GFPGANv1.4.pth"
+    },
+    "class_type": "FaceRestoreModelLoader",
+    "_meta": {
+      "title": "FaceRestoreModelLoader"
+    }
+  },
+  "41": {
+    "inputs": {
+      "facedetection": "YOLOv5l",
+      "codeformer_fidelity": 0.5000000000000001,
+      "facerestore_model": [
+        "40",
+        0
+      ],
+      "image": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "FaceRestoreCFWithModel",
+    "_meta": {
+      "title": "FaceRestoreCFWithModel (Output)"
+    }
+  },
+  "63": {
+    "inputs": {
+      "lora_name": "MJ52_v2.0.safetensors",
+      "strength_model": 0.6000000000000001,
+      "strength_clip": 0.30000000000000004,
+      "model": [
+        "4",
+        0
+      ],
+      "clip": [
+        "4",
+        1
+      ]
+    },
+    "class_type": "LoraLoader",
+    "_meta": {
+      "title": "Load LoRA"
+    }
+  }
+}

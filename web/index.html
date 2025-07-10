@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prompting Heritage</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
+      rel="stylesheet"
+    />
+
+    <!-- Bootstrap 5 CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- ✅ CORRETTO: Usa percorsi /test/ -->
+    <link rel="stylesheet" href="/test/css/dungeon.css" />
+  </head>
+  <body>
+    <div class="page">
+      <main class="main-content" role="main">
+        <div id="created-img-container" class="empty">
+          <div id="progress-wrap">
+            <label for="main-progress" class="visually-hidden">Progress</label>
+            <progress
+              id="main-progress"
+              value="0"
+              max="100"
+              aria-live="polite"
+              aria-valuetext="0 percent"
+            ></progress>
+          </div>
+
+          <section id="results" aria-live="polite" aria-atomic="true">
+            <!-- Output generato -->
+          </section>
+        </div>
+        <div id="toast" class="toast hidden">
+          <span class="material-symbols-outlined"> arrow_circle_down </span>
+          Scorri in basso per vedere le immagini precedenti
+        </div>
+        <!-- Form di configurazione -->
+        <form
+          class="sidebar padding-x padding-y"
+          id="prompt-form"
+          aria-labelledby="prompt-config-heading"
+        >
+          <div class="left-content-box">
+            <h1 id="prompt-config-heading">Descrivi la tua immagine</h1>
+            <div class="form-item-wrap">
+              <label for="positive">Positive Prompt</label>
+              <input
+                type="text"
+                id="positive"
+                placeholder="Cosa vuoi inserire..."
+                aria-describedby="positive-desc"
+              />
+              <p id="positive-desc" class="visually-hidden">
+                Describe the desired elements of your prompt.
+              </p>
+            </div>
+
+            <div class="form-item-wrap">
+              <label for="negative">Negative Prompt</label>
+              <input
+                type="text"
+                id="negative"
+                placeholder="Cosa vuoi escludere..."
+                aria-describedby="negative-desc"
+              />
+              <p id="negative-desc" class="visually-hidden">
+                Describe elements to exclude from the result.
+              </p>
+            </div>
+
+            <div hidden>
+              <label for="seed">Seed</label>
+              <input
+                type="text"
+                id="seed"
+                placeholder="Leave blank for random"
+                aria-describedby="seed-desc"
+              />
+              <p id="seed-desc">
+                Enter a number to use as a seed or leave blank to randomize.
+              </p>
+
+              <label class="checkbox-label" for="randomSeed">
+                <input type="checkbox" id="randomSeed" checked />
+                Use random seed
+              </label>
+            </div>
+            <!-- blocco stili -->
+            <div id="container-stili">
+              <h2>Aggiungi uno stile</h2>
+
+              <div class="wrapper-stili">
+                <div class="stile-block">
+                  <button type="button" data-stile="style1" class="style-btn">
+                    <img
+                      src="/test/images/gatto1.png"
+                      alt="Stile 1"
+                      width="200"
+                      height="200"
+                    />
+                    <span class="nome-stile">Nome stile</span>
+                  </button>
+                </div>
+                <div class="stile-block">
+                  <button type="button" data-stile="style2" class="style-btn">
+                    <img
+                      src="/test/images/gatto2.png"
+                      alt="Stile 2"
+                      width="200"
+                      height="200"
+                    /><span class="nome-stile">Nome stile</span>
+                  </button>
+                </div>
+                <div class="stile-block">
+                  <button type="button" data-stile="style3" class="style-btn">
+                    <img
+                      src="/test/images/gatto3.png"
+                      alt="Stile 3"
+                      width="200"
+                      height="200"
+                    /><span class="nome-stile">Nome stile</span>
+                  </button>
+                </div>
+                <div class="stile-block">
+                  <button type="button" data-stile="style4" class="style-btn">
+                    <img
+                      src="/test/images/gatto4.jpg"
+                      alt="Stile 4"
+                      width="200"
+                      height="200"
+                    /><span class="nome-stile">Nome stile</span>
+                  </button>
+                </div>
+                <div class="stile-block">
+                  <button type="button" data-stile="style5" class="style-btn">
+                    <img
+                      src="/test/images/gatto5.png"
+                      alt="Stile 5"
+                      width="200"
+                      height="200"
+                    /><span class="nome-stile">Nome stile</span>
+                  </button>
+                </div>
+                <div class="stile-block">
+                  <button type="button" data-stile="style6" class="style-btn">
+                    <img
+                      src="/test/images/gatto6.png"
+                      alt="Stile 6"
+                      width="200"
+                      height="200"
+                    /><span class="nome-stile">Nome stile</span>
+                  </button>
+                </div>
+                <div class="stile-block">
+                  <button type="button" data-stile="style7" class="style-btn">
+                    <img
+                      src="/test/images/gatto7.png"
+                      alt="Stile 7"
+                      width="200"
+                      height="200"
+                    /><span class="nome-stile">Nome stile</span>
+                  </button>
+                </div>
+                <div class="stile-block">
+                  <button type="button" data-stile="style12" class="style-btn">
+                    <img
+                      src="/test/images/gatto12.png"
+                      alt="Stile 12"
+                      width="200"
+                      height="200"
+                    /><span class="nome-stile">Nome stile</span>
+                  </button>
+                </div>
+              </div>
+              <!-- più stili -->
+              <div id="more-styles" style="display: none" class="wrapper-stili">
+                <div class="stile-block">
+                  <button type="button" data-stile="style8" class="style-btn">
+                    <img
+                      src="/test/images/gatto8.png"
+                      alt="Stile 8"
+                      width="200"
+                      height="200"
+                    /><span class="nome-stile">Nome stile</span>
+                  </button>
+                </div>
+                <div class="stile-block">
+                  <button type="button" data-stile="style9" class="style-btn">
+                    <img
+                      src="/test/images/gatto9.png"
+                      alt="Stile 9"
+                      width="200"
+                      height="200"
+                    /><span class="nome-stile">Nome stile</span>
+                  </button>
+                </div>
+                <div class="stile-block">
+                  <button type="button" data-stile="style10" class="style-btn">
+                    <img
+                      src="/test/images/gatto10.png"
+                      alt="Stile 10"
+                      width="200"
+                      height="200"
+                    /><span class="nome-stile">Nome stile</span>
+                  </button>
+                </div>
+                <div class="stile-block">
+                  <button type="button" data-stile="style11" class="style-btn">
+                    <img
+                      src="/test/images/gatto11.png"
+                      alt="Stile 11"
+                      width="200"
+                      height="200"
+                    /><span class="nome-stile">Nome stile</span>
+                  </button>
+                </div>
+              </div>
+              <button id="toggle-styles">Scopri altri stili</button>
+              <!-- fine più stili -->
+            </div>
+
+            <!-- fine stili -->
+            <!-- pulsanti -->
+            <div id="button-wrap">
+              <button
+                id="filter"
+                type="button"
+                data-bs-toggle="modal"
+                data-bs-target="#filtersModal"
+                aria-label="Apri filtri"
+              >
+                <span class="material-symbols-outlined"> discover_tune </span>
+                Impostazioni
+              </button>
+              <button id="generate" type="button" aria-label="Generate prompt">
+                <span class="material-symbols-outlined">auto_awesome</span>
+                Genera
+              </button>
+            </div>
+            <!-- fine pulsanti -->
+          </div>
+        </form>
+        <!-- Modale -->
+        <div
+          class="modal fade"
+          id="filtersModal"
+          tabindex="-1"
+          aria-labelledby="filtersModalLabel"
+          aria-hidden="true"
+        >
+          <div
+            class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg"
+          >
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="filtersModalLabel">
+                  Modifica impostazioni immagine
+                </h5>
+                <button
+                  type="button"
+                  class="btn-close"
+                  data-bs-dismiss="modal"
+                  aria-label="Chiudi"
+                ></button>
+              </div>
+              <div class="modal-body">
+                <!-- Seed -->
+                <div class="row-filtro">
+                  <div class="form-check form-switch mb-2">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="filter-seed-toggle"
+                    />
+                    <label class="form-check-label" for="filter-seed-toggle"
+                      ><strong>Usa Seed personalizzato</strong>
+                    </label>
+                  </div>
+                  <input
+                    type="number"
+                    class="form-control"
+                    id="filter-seed-value"
+                    placeholder="Es. 123456"
+                  />
+                  <div class="form-text">
+                    Il seed controlla la casualità: stesso seed = immagine
+                    simile.
+                  </div>
+                </div>
+
+                <!-- Formato -->
+                <div class="row-filtro">
+                  <label class="form-label"
+                    ><strong>Formato immagine</strong>
+                  </label>
+                  <div class="btn-group w-100" role="group">
+                    <button
+                      type="button"
+                      class="btn btn-outline-dark format-btn"
+                      data-format="vertical"
+                    >
+                      <span class="material-symbols-outlined"> crop_9_16 </span>
+                      Verticale
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-outline-dark format-btn"
+                      data-format="horizontal"
+                    >
+                      <span class="material-symbols-outlined"> crop_16_9 </span>
+                      Orizzontale
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-outline-dark format-btn"
+                      data-format="square"
+                    >
+                      <span class="material-symbols-outlined">
+                        crop_square
+                      </span>
+                      Quadrata
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Qualità -->
+                <div class="row-filtro">
+                  <label for="filter-quality" class="form-label"
+                    ><strong>Qualità immagine:</strong>
+                    <span id="quality-value">15</span></label
+                  >
+                  <input
+                    type="range"
+                    class="form-range"
+                    min="0"
+                    max="150"
+                    value="15"
+                    id="filter-quality"
+                  />
+                  <div class="form-text">
+                    Maggiore qualità = più dettagli, ma tempi più lunghi.
+                  </div>
+                </div>
+
+                <!-- Definizione -->
+                <div class="mb-2">
+                  <label for="filter-definition" class="form-label"
+                    ><strong>Definizione immagine:</strong>
+                    <span id="definition-value">75</span></label
+                  >
+                  <input
+                    type="range"
+                    class="form-range"
+                    min="0"
+                    max="150"
+                    value="75"
+                    id="filter-definition"
+                  />
+                  <div class="form-text">
+                    Controlla nitidezza e chiarezza dell'immagine finale.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Pulsanti finali -->
+              <div class="modal-footer d-flex justify-content-between">
+                <button
+                  type="button"
+                  class="btn btn-outline-danger"
+                  id="reset-filters"
+                >
+                  <span class="material-symbols-outlined"> replay </span> Reset
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-dark"
+                  id="apply-filters"
+                  data-bs-dismiss="modal"
+                >
+                  <span class="material-symbols-outlined"> check_circle </span>
+                  Applica
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <section id="gallery" class="padding-x">
+          <h2>Immagini precedenti</h2>
+          <div id="gallery-images"></div>
+        </section>
+      </main>
+
+      <!-- Risultati -->
+    </div>
+    <footer class="page-footer"></footer>
+
+    <!-- Bootstrap Bundle JS (con Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- ✅ CORRETTO: Usa percorso /test/ -->
+    <script src="/test/js/dungeon.js"></script>
+  </body>
+</html>

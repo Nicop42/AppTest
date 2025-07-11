@@ -330,7 +330,7 @@
   }
 
   // Hidden negative prompt for content filtering
-  const HIDDEN_NEGATIVE_PROMPT = "nsfw, nudity, naked, explicit, adult content, violence, gore, disturbing content, low quality, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry, artist name, bad anatomy, bad proportions, extra limbs, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, ugly";
+  const HIDDEN_NEGATIVE_PROMPT = "nude, porn, nsfw, breast, nipples, naked woman, nsfw, nudity, naked, explicit, adult content, violence, gore, disturbing content, low quality, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry, artist name, bad anatomy, bad proportions, extra limbs, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, ugly";
 
   // List of forbidden words that will be removed from prompts
   const FORBIDDEN_WORDS = [

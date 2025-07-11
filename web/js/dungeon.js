@@ -329,7 +329,33 @@
     return resData;
   }
 
-  // Funzione per ottenere il workflow aggiornato con il seed corretto, i parametri di qualità e le dimensioni
+  // Hidden negative prompt for content filtering
+  const HIDDEN_NEGATIVE_PROMPT = "nsfw, nudity, naked, explicit, adult content, violence, gore, disturbing content, low quality, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry, artist name, bad anatomy, bad proportions, extra limbs, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, ugly";
+
+  // List of forbidden words that will be removed from prompts
+  const FORBIDDEN_WORDS = [
+    'nsfw', 'nudity', 'naked', 'explicit', 'porn', 'pornography', 'sex', 'sexual',
+    'violence', 'gore', 'blood', 'bloody', 'kill', 'killing', 'murder', 'hate',
+    'hateful', 'racist', 'racism', 'nazi', 'terrorist', 'terrorism', 'illegal',
+    'drug', 'drugs', 'cocaine', 'heroin', 'meth', 'crack', 'weapon', 'gun', 'knife',
+    'bomb', 'explosive', 'copyrighted', 'trademarked', 'watermark', 'signature'
+  ];
+
+  // Function to filter out forbidden words from text
+  function filterForbiddenWords(text) {
+    if (!text) return text;
+    
+    // Create a regex pattern that matches any of the forbidden words (case insensitive)
+    const forbiddenPattern = new RegExp(`\\b(${FORBIDDEN_WORDS.join('|')})\\b`, 'gi');
+    
+    // Replace forbidden words with an empty string and clean up any double spaces
+    return text
+      .replace(forbiddenPattern, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  // Function to get the workflow with updated seed and parameters
   async function getWorkflowWithSeed() {
     const workflow = await loadWorkflow();
     
@@ -411,18 +437,15 @@
     
     actions.appendChild(saveBtn);
     
-    // Add reuse button for all images
-    const reuseBtn = document.createElement('button');
-    reuseBtn.innerHTML = '<span class="material-symbols-outlined">replay</span> Riusa';
-    reuseBtn.onclick = () => {
-      // Add functionality to reuse the image
-      console.log('Reuse image:', src);
-    };
-    actions.appendChild(reuseBtn);
-    
-    // Hide Riusa button for main image
-    if (isMainImage) {
-      reuseBtn.style.display = 'none';
+    // Only add reuse button for non-main images (gallery)
+    if (!isMainImage) {
+      const reuseBtn = document.createElement('button');
+      reuseBtn.innerHTML = '<span class="material-symbols-outlined">replay</span> Riusa';
+      reuseBtn.onclick = () => {
+        // Add functionality to reuse the image
+        console.log('Reuse image:', src);
+      };
+      actions.appendChild(reuseBtn);
     }
     
     container.appendChild(img);
@@ -445,11 +468,26 @@
       const pos = positiveInput.value.trim();
       const neg = negativeInput.value.trim();
       
-      // Aggiorna i prompt nel workflow
-      wf["30"]["inputs"]["text_g"] = pos;
-      wf["30"]["inputs"]["text_l"] = pos;
-      wf["33"]["inputs"]["text_g"] = neg;
-      wf["33"]["inputs"]["text_l"] = neg;
+      // Filter forbidden words from prompts
+      const filteredPos = filterForbiddenWords(pos);
+      const filteredNeg = filterForbiddenWords(neg);
+      
+      // Update the input fields with filtered text
+      if (filteredPos !== pos) {
+        positiveInput.value = filteredPos;
+      }
+      if (filteredNeg !== neg) {
+        negativeInput.value = filteredNeg;
+      }
+      
+      // Update prompts in the workflow
+      wf["30"]["inputs"]["text_g"] = filteredPos;
+      wf["30"]["inputs"]["text_l"] = filteredPos;
+      
+      // Combine user's negative prompt with hidden negative prompt
+      const combinedNegativePrompt = filteredNeg ? `${filteredNeg}, ${HIDDEN_NEGATIVE_PROMPT}` : HIDDEN_NEGATIVE_PROMPT;
+      wf["33"]["inputs"]["text_g"] = combinedNegativePrompt;
+      wf["33"]["inputs"]["text_l"] = combinedNegativePrompt;
       
       // Aggiorna il seed nell'input per visualizzazione
       seedInput.value = wf["3"].inputs.seed;
@@ -537,8 +575,7 @@
         
         for (const img of msg.data.output.images) {
           const url = `/output/${img.subfolder}/${img.filename}?rand=${Math.random()}`;
-          // Create main image without the Riusa button
-          const imageElement = createImageElement(url, true);
+          const imageElement = createImageElement(url);
           imageContainer.appendChild(imageElement);
         }
         

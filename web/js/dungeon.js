@@ -386,9 +386,56 @@
     return workflow;
   }
 
+  // Function to create image element with actions
+  function createImageElement(src, isMainImage = false) {
+    const container = document.createElement('div');
+    container.className = 'image-wrapper';
+    
+    const img = document.createElement('img');
+    img.src = src;
+    img.className = 'generated-image';
+    img.alt = 'Generated image';
+    
+    const actions = document.createElement('div');
+    actions.className = 'image-actions';
+    
+    // Always add save button
+    const saveBtn = document.createElement('button');
+    saveBtn.innerHTML = '<span class="material-symbols-outlined">download</span> Salva';
+    saveBtn.onclick = () => {
+      const link = document.createElement('a');
+      link.href = src;
+      link.download = `generated-image-${Date.now()}.png`;
+      link.click();
+    };
+    
+    actions.appendChild(saveBtn);
+    
+    // Add reuse button for all images
+    const reuseBtn = document.createElement('button');
+    reuseBtn.innerHTML = '<span class="material-symbols-outlined">replay</span> Riusa';
+    reuseBtn.onclick = () => {
+      // Add functionality to reuse the image
+      console.log('Reuse image:', src);
+    };
+    actions.appendChild(reuseBtn);
+    
+    // Hide Riusa button for main image
+    if (isMainImage) {
+      reuseBtn.style.display = 'none';
+    }
+    
+    container.appendChild(img);
+    container.appendChild(actions);
+    
+    return container;
+  }
+
   generateBtn.addEventListener("click", async () => {
     try {
-      // Mostra la progress bar
+      // Remove empty class from container
+      contImage.classList.remove('empty');
+      // Show progress bar
       progressbar.style.display = "block";
       // rimuovo lo stile del container img vuoto
       contImage.classList.remove("empty");
@@ -450,9 +497,9 @@
       }
 
       if (msg.type === "executed" && msg.data?.output?.images) {
-        const imageBlock = results.querySelector(".image-block");
-
-        if (imageBlock) {
+        // Move previous image to gallery if exists
+        const existingImage = results.querySelector(".image-container");
+        if (existingImage) {
           console.log("📦 Moving previous image to gallery");
           $("#gallery").style.display = "block";
 
@@ -465,7 +512,7 @@
           const prompts = promptQueue.shift() || { pos: "", neg: "" };
           promptInfo.innerHTML = `<p><strong>Positive:</strong> ${prompts.pos}</p><p><strong>Negative:</strong> ${prompts.neg}</p>`;
 
-          galleryItem.appendChild(imageBlock);
+          galleryItem.appendChild(existingImage);
           galleryItem.appendChild(promptInfo);
           gallery.insertBefore(galleryItem, gallery.firstChild);
         }
@@ -483,37 +530,19 @@
         // Hide progress bar
         progressbar.style.display = "none";
 
-        // Show new generated image
-        for (let img of msg.data.output.images) {
+        // Show new generated images
+        results.innerHTML = "";
+        const imageContainer = document.createElement('div');
+        imageContainer.className = 'image-container';
+        
+        for (const img of msg.data.output.images) {
           const url = `/output/${img.subfolder}/${img.filename}?rand=${Math.random()}`;
-          
-          const container = document.createElement("div");
-          container.className = "image-block";
-          
-          const image = document.createElement("img");
-          image.src = url;
-          image.alt = "Generated image";
-          
-          const btnWrap = document.createElement("div");
-          btnWrap.className = "btn-wrap";
-          
-          const downloadBtn = document.createElement("a");
-          downloadBtn.href = url;
-          downloadBtn.download = img.filename;
-          downloadBtn.innerText = "Salva";
-          downloadBtn.className = "download-btn";
-          
-          // Create Riusa button
-          const reuseBtn = document.createElement("button");
-          reuseBtn.innerText = "Riusa";
-          reuseBtn.className = "reuse-btn";
-          
-          btnWrap.appendChild(downloadBtn);
-          btnWrap.appendChild(reuseBtn);
-          container.appendChild(image);
-          container.appendChild(btnWrap);
-          results.appendChild(container);
+          // Create main image without the Riusa button
+          const imageElement = createImageElement(url, true);
+          imageContainer.appendChild(imageElement);
         }
+        
+        results.appendChild(imageContainer);
       }
     });
 

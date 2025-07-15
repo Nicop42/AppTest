@@ -106,10 +106,9 @@ input::placeholder{
 
 #progress-wrap {
   width: 100%;
-  padding: 10px 5%;
+  padding: 0 5%;
   background: #fff;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  margin-bottom: 15px;
+ 
 }
 #main-progress {
   display: none;
@@ -122,6 +121,15 @@ progress {
   accent-color: var(--highlight);
   border-radius: 4px;
   overflow: hidden;
+}
+progress::-webkit-progress-value{
+  background-color: var(--highlight);
+
+}
+
+#loading-text{
+  text-align: center;
+  margin-top: 5px;
 }
 
 /* FORM */
@@ -148,26 +156,22 @@ progress {
 
 /* Style for generated images */
 .generated-image {
-  width: 100%;
+  max-height: 60vh;
   max-width: 100%;
-  margin: 0 0 15px;
   display: block;
+  margin: 0 auto 15px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   border-radius: 8px;
 }
 
-/* Style for gallery images */
-#gallery .generated-image {
-  max-width: 50%;
-  margin: 0 auto 15px;
-}
+
 
 .image-container {
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
   align-items: flex-start;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   width: 100%;
 }
 
@@ -178,7 +182,8 @@ progress {
 
 /* Style for gallery items */
 #gallery .image-wrapper {
-  flex: 0 0 calc(50% - 8px);
+  display: flex;
+  gap:10px;
   position: relative;
 }
 
@@ -198,15 +203,12 @@ progress {
 .image-actions button {
   padding: 6px 12px;
   font-size: 0.9rem;
-  border-radius: 4px;
+  font-weight: 400;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.image-actions button:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
 
 .toast {
   position: fixed;
@@ -298,7 +300,7 @@ button .material-symbols-outlined {
   justify-content: center;
 }
 
-.download-btn::before {
+/*.download-btn::before {
   content: "download";
   font-family: 'Material Symbols Outlined';
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -314,7 +316,7 @@ button .material-symbols-outlined {
   font-size: 20px;
   margin-right: 4px;
   vertical-align: middle;
-}
+}*/
 
 /* carosello stile */
 #container-stili{
@@ -492,6 +494,12 @@ button .material-symbols-outlined {
   margin-bottom: 10px;
 }
 
+
+#gallery .generated-image {
+  max-width: 50%;
+  margin: 0 auto 5px;
+}
+
 .gallery-item {
   display: flex;
   align-items: flex-start;
@@ -506,15 +514,19 @@ button .material-symbols-outlined {
   padding-top: 12px;
 }
 
-.gallery-item .image-block {
-  position: relative;
-  flex: 0 0 auto;
+.gallery-item .image-container{
+  margin-bottom: 0;
 }
 
-.gallery-item .btn-wrap {
-  position: static;
-  transform: none;
-  margin-top: 8px;
+.gallery-item .image-actions {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.gallery-item .image-actions button{
+  width: fit-content;
+  font-weight: 400;
 }
 
 .prompt-info p{
@@ -542,12 +554,9 @@ button .material-symbols-outlined {
   width: 100%;
 }
 
-@media all and (max-width: 600px){
+/*@media all and (max-width: 600px){
   #gallery .image-block img{
     width: 50%;
   }
 
-  .wrapper-stili{
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
+}*/

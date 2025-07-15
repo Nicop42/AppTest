@@ -640,44 +640,15 @@
 
         // Show new generated images
         results.innerHTML = "";
-        
-        // Create image container
         const imageContainer = document.createElement("div");
         imageContainer.className = "image-container";
 
-        // Create loading text
-        const loading = document.createElement("p");
-        loading.id = "loading-text";
-        loading.textContent = "Loading images...";
-
-        results.appendChild(loading);
-
-        // Process images
-        const handleImageLoad = (imgElement, container) => {
-          imgElement.onload = () => {
-            container.classList.add("loaded");
-          };
-          imgElement.onerror = () => {
-            container.classList.add("error");
-            container.innerHTML = "Failed to load image";
-          };
-        };
-
-        if (mainImage) {
-          handleImageLoad(mainImage, mainImageElement);
-        }
-        imageContainer.appendChild(mainImageElement);
-
-        // Rest are gallery images
-        for (let i = 1; i < msg.data.output.images.length; i++) {
-          const img = msg.data.output.images[i];
-          const url = `/output/${img.subfolder}/${img.filename}`;
-          const galleryImageElement = createImageElement(url, false);
-          const galleryImage = galleryImageElement.querySelector("img");
-          if (galleryImage) {
-            handleImageLoad(galleryImage, galleryImageElement);
-          }
-          imageContainer.appendChild(galleryImageElement);
+        for (const img of msg.data.output.images) {
+          const url = `/output/${img.subfolder}/${
+            img.filename
+          }?rand=${Math.random()}`;
+          const imageElement = createImageElement(url);
+          imageContainer.appendChild(imageElement);
         }
 
         results.appendChild(imageContainer);

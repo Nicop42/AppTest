@@ -637,34 +637,47 @@
 
         // Hide progress bar
         progressbar.style.display = "none";
-        progressbar.value = 0; // Reset progress
 
         // Show new generated images
         results.innerHTML = "";
+        
+        // Create image container
         const imageContainer = document.createElement("div");
         imageContainer.className = "image-container";
 
-        for (const img of msg.data.output.images) {
-          // Add proper error handling for image loading
-          const url = `/output/${img.subfolder}/${img.filename}`;
-          const imageElement = createImageElement(url, true);
-          
-          // Add loading state
-          imageElement.classList.add("loading");
-          
-          // Create a new image element
-          const imgElement = document.createElement("img");
-          imgElement.src = url;
+        // Create loading text
+        const loading = document.createElement("p");
+        loading.id = "loading-text";
+        loading.textContent = "Loading images...";
+
+        results.appendChild(loading);
+
+        // Process images
+        const handleImageLoad = (imgElement, container) => {
           imgElement.onload = () => {
-            imageElement.classList.remove("loading");
-            imageElement.classList.add("loaded");
+            container.classList.add("loaded");
           };
           imgElement.onerror = () => {
-            imageElement.classList.add("error");
-            imageElement.innerHTML = "Failed to load image";
+            container.classList.add("error");
+            container.innerHTML = "Failed to load image";
           };
-          
-          imageContainer.appendChild(imageElement);
+        };
+
+        if (mainImage) {
+          handleImageLoad(mainImage, mainImageElement);
+        }
+        imageContainer.appendChild(mainImageElement);
+
+        // Rest are gallery images
+        for (let i = 1; i < msg.data.output.images.length; i++) {
+          const img = msg.data.output.images[i];
+          const url = `/output/${img.subfolder}/${img.filename}`;
+          const galleryImageElement = createImageElement(url, false);
+          const galleryImage = galleryImageElement.querySelector("img");
+          if (galleryImage) {
+            handleImageLoad(galleryImage, galleryImageElement);
+          }
+          imageContainer.appendChild(galleryImageElement);
         }
 
         results.appendChild(imageContainer);

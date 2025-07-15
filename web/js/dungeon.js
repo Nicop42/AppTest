@@ -37,7 +37,7 @@
     setTimeout(() => {
       toast.classList.remove("show");
       setTimeout(() => toast.classList.add("hidden"), 300); // Rimuove dopo la transizione
-    }, 3000); // Visibile per 3 secondi
+    }, 6000); // Visibile per 6 secondi
   }
 
   /* STILI */
@@ -522,6 +522,8 @@
 
   generateBtn.addEventListener("click", async () => {
     try {
+      // mi sposto in alto nella pagina per vedere la'ggiornamneto dell'immagine
+      contImage.scrollIntoView({ behavior: "smooth" });
       // Remove empty class from container
       contImage.classList.remove("empty");
       // Show progress bar
@@ -635,6 +637,7 @@
 
         // Hide progress bar
         progressbar.style.display = "none";
+        progressbar.value = 0; // Reset progress
 
         // Show new generated images
         results.innerHTML = "";
@@ -642,10 +645,25 @@
         imageContainer.className = "image-container";
 
         for (const img of msg.data.output.images) {
-          const url = `/output/${img.subfolder}/${
-            img.filename
-          }?rand=${Math.random()}`;
-          const imageElement = createImageElement(url);
+          // Add proper error handling for image loading
+          const url = `/output/${img.subfolder}/${img.filename}`;
+          const imageElement = createImageElement(url, true);
+          
+          // Add loading state
+          imageElement.classList.add("loading");
+          
+          // Create a new image element
+          const imgElement = document.createElement("img");
+          imgElement.src = url;
+          imgElement.onload = () => {
+            imageElement.classList.remove("loading");
+            imageElement.classList.add("loaded");
+          };
+          imgElement.onerror = () => {
+            imageElement.classList.add("error");
+            imageElement.innerHTML = "Failed to load image";
+          };
+          
           imageContainer.appendChild(imageElement);
         }
 

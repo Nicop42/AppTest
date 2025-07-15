@@ -130,6 +130,7 @@ progress::-webkit-progress-value{
 #loading-text{
   text-align: center;
   margin-top: 5px;
+  margin-bottom: 5px;
 }
 
 /* FORM */
@@ -212,7 +213,7 @@ progress::-webkit-progress-value{
 
 .toast {
   position: fixed;
-  bottom: 20px;
+  bottom: 70px;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(0, 0, 0, 0.85);
@@ -497,7 +498,7 @@ button .material-symbols-outlined {
 
 #gallery .generated-image {
   max-width: 50%;
-  margin: 0 auto 5px;
+  margin: 0 auto;
 }
 
 .gallery-item {
@@ -522,6 +523,7 @@ button .material-symbols-outlined {
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+  margin-top: 0;
 }
 
 .gallery-item .image-actions button{

@@ -328,7 +328,7 @@
       // Crea una copia profonda dell'oggetto per evitare modifiche indesiderate
       return JSON.parse(JSON.stringify(cachedWorkflow));
     }
-    const res = await fetch("/test/js/fastSDXLtext2img.json");
+    const res = await fetch(" js/fastSDXLtext2img.json");
     if (!res.ok) throw new Error(`Workflow fetch failed: ${res.status}`);
     cachedWorkflow = await res.json();
     // Ritorna una copia dell'oggetto per evitare modifiche indesiderate
@@ -591,6 +591,70 @@
     seedInput.disabled = isRandomInput.checked;
   });
 
+  /* --------------  utilizzo proprie immagini --------------  */
+  const takePhotoBtn = document.getElementById("takePhotoBtn");
+  const uploadPhotoBtn = document.getElementById("uploadPhotoBtn");
+  const cameraInput = document.getElementById("cameraInput");
+  const uploadInput = document.getElementById("uploadInput");
+  const previewArea = document.getElementById("previewArea");
+  const resetBtn = document.getElementById("reset-photo");
+  const applyBtn = document.getElementById("apply-photo");
+  const photoTextP = document.querySelector(
+    "#use-photo-section .use-photo-text p"
+  );
+
+  let uploadedImageURL = null;
+  let selectedFile = null;
+
+  takePhotoBtn.addEventListener("click", () => cameraInput.click());
+  uploadPhotoBtn.addEventListener("click", () => uploadInput.click());
+
+  function handleFile(file) {
+    if (!file) return;
+
+    // Controlla tipo file
+    if (file.type !== "image/jpeg" && file.type !== "image/png") {
+      alert("Per favore carica solo immagini JPG o PNG.");
+      return;
+    }
+
+    // Revoca URL precedente se c'è
+    if (uploadedImageURL) {
+      URL.revokeObjectURL(uploadedImageURL);
+    }
+
+    // Crea nuovo URL e aggiorna preview
+    uploadedImageURL = URL.createObjectURL(file);
+    previewArea.innerHTML = `<img src="${uploadedImageURL}" alt="Preview">`;
+
+    // Aggiorna stato file selezionato e testo
+    selectedFile = file;
+    photoTextP.textContent = file.name;
+  }
+
+  cameraInput.addEventListener("change", (e) => handleFile(e.target.files[0]));
+  uploadInput.addEventListener("change", (e) => handleFile(e.target.files[0]));
+
+  resetBtn.addEventListener("click", () => {
+    if (uploadedImageURL) {
+      URL.revokeObjectURL(uploadedImageURL);
+      uploadedImageURL = null;
+    }
+    previewArea.innerHTML = "";
+
+    cameraInput.value = "";
+    uploadInput.value = "";
+
+    selectedFile = null;
+
+    photoTextP.textContent = "Scegli una foto dal tuo device";
+  });
+
+  // Il bottone apply qui non cambia testo, perché già aggiornato in handleFile
+  applyBtn.addEventListener("click", () => {
+    // Puoi chiudere la modale, o eventualmente fare altre azioni
+  });
+  /** fine  utilizzo proprie immagini */
   try {
     const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const ws = new WebSocket(

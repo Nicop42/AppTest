@@ -1,0 +1,354 @@
+====================================
+WEBAPP MODULAR STRUCTURE DOCUMENTATION
+====================================
+
+This document explains the modular structure of the ComfyUI-based image generation webapp.
+The original 729-line dungeon.js file has been broken down into 8 focused modules.
+
+====================================
+PROJECT OVERVIEW
+====================================
+
+This webapp connects to a ComfyUI session to generate AI images through a personalized HTML interface.
+Users can:
+- Enter positive/negative prompts
+- Select from 12 predefined art styles
+- Upload their own photos for img2img generation (NEW: automatically switches workflows)
+- Adjust quality, format, and other settings
+- View generated images and maintain a gallery with generation mode tracking
+
+====================================
+FILE STRUCTURE
+====================================
+
+web/
+├── index.html                 - Main HTML interface
+├── css/
+│   └── dungeon.css           - Styling
+├── js/
+│   ├── app.js                - Main application coordinator
+│   ├── utils.js              - DOM utilities and helper functions
+│   ├── styleManager.js       - Style selection and management
+│   ├── settingsManager.js    - Settings and filters management
+│   ├── apiClient.js          - ComfyUI API communication
+│   ├── imageGenerator.js     - Image generation logic
+│   ├── photoUpload.js        - Photo upload functionality
+│   ├── websocketHandler.js   - WebSocket communication
+│   ├── fastSDXLtext2img.json - ComfyUI workflow configuration
+│   └── fastSDXLimg2img.json  - ComfyUI img2img workflow
+└── images/                   - Style preview images
+
+====================================
+DETAILED MODULE DESCRIPTIONS
+====================================
+
+1. app.js - MAIN APPLICATION COORDINATOR
+--------------------------------------------
+PURPOSE: Initializes and coordinates all other modules
+DEPENDENCIES: All other modules
+KEY FEATURES:
+- Creates unique client ID for ComfyUI session
+- Initializes all modules in correct order
+- Provides global access to modules via window.app
+- Handles application lifecycle (init/destroy)
+- Error handling and user notifications
+
+MAIN METHODS:
+- init() - Initialize all modules
+- getClientId() - Get unique session ID
+- destroy() - Cleanup resources
+
+2. utils.js - DOM UTILITIES AND HELPERS
+----------------------------------------
+PURPOSE: Provides common utility functions used across modules
+DEPENDENCIES: None
+KEY FEATURES:
+- DOM element selection shortcuts
+- Progress bar updates
+- Random seed generation
+- Value range mapping
+- Image element creation with download/reuse buttons
+- Toast notification system
+
+MAIN CLASSES/FUNCTIONS:
+- DOMUtils.$ - Quick DOM selector
+- DOMUtils.updateProgress() - Update progress bars
+- DOMUtils.generateSeed() - Generate random seeds
+- DOMUtils.mapRange() - Map values between ranges
+- DOMUtils.createImageElement() - Create image with action buttons
+- DOMUtils.showToast() - Show notification toast
+
+3. styleManager.js - STYLE SELECTION AND MANAGEMENT
+---------------------------------------------------
+PURPOSE: Manages 12 predefined art styles and their integration with prompts
+DEPENDENCIES: utils.js
+KEY FEATURES:
+- 12 predefined styles (Digital Art, Oil Painting, Anime, etc.)
+- Style selection UI management
+- Automatic prompt updating when styles are selected/deselected
+- Style toggle functionality (show/hide additional styles)
+- Smart prompt manipulation (removes old styles, adds new ones)
+
+STYLE CATEGORIES:
+- style1: Digital Art
+- style2: Oil Painting  
+- style3: Anime Style
+- style4: Pencil Sketch
+- style5: Watercolor
+- style6: Cyberpunk
+- style7: Low Poly
+- style8: Steampunk
+- style9: Pixel Art
+- style10: Surrealism
+- style11: Chalk Drawing
+- style12: Claymation
+
+MAIN METHODS:
+- handleStyleSelection() - Toggle style on/off
+- updatePromptWithStyles() - Update prompt field with selected styles
+- getSelectedStylesPrompt() - Get comma-separated style prompts
+
+4. settingsManager.js - SETTINGS AND FILTERS MANAGEMENT
+-------------------------------------------------------
+PURPOSE: Manages all image generation settings and filter modal
+DEPENDENCIES: utils.js
+KEY FEATURES:
+- Quality slider (0-150, maps to ComfyUI steps 5-30)
+- Definition slider (0-150, maps to CFG scale 0.5-3.0)
+- Image format selection (vertical/horizontal/square)
+- Custom seed toggle and management
+- Filter modal controls
+- Settings persistence during session
+
+IMAGE FORMATS:
+- Vertical: 1024x1820
+- Horizontal: 1820x1024  
+- Square: 1024x1024 (default)
+
+MAIN METHODS:
+- getSettings() - Get current settings object
+- getDimensions() - Get width/height for selected format
+- resetFilters() - Reset all settings to defaults
+- applyFilters() - Apply and return current filter settings
+
+5. apiClient.js - COMFYUI API COMMUNICATION
+------------------------------------------
+PURPOSE: Handles all communication with ComfyUI backend
+DEPENDENCIES: utils.js
+KEY FEATURES:
+- Dual workflow loading and caching (text2img + img2img)
+- Prompt queuing to ComfyUI
+- Content filtering and censorship
+- Workflow parameter updates (seed, steps, CFG, dimensions)
+- Image upload for img2img generation
+- Automatic workflow selection based on photo presence
+- Forbidden word filtering for safety
+
+SECURITY FEATURES:
+- Filters 35+ forbidden words related to NSFW, violence, illegal content
+- Adds hidden negative prompt for content filtering
+- Sanitizes user input before sending to ComfyUI
+
+MAIN METHODS:
+- loadWorkflow(useImg2Img) - Load and cache ComfyUI workflow (text2img or img2img)
+- queuePrompt() - Send generation request to ComfyUI
+- getWorkflowWithSettings() - Update workflow with user settings and image
+- filterForbiddenWords() - Remove inappropriate content
+- updateWorkflowPrompts() - Update workflow with filtered prompts
+- uploadImage() - Upload user photo to ComfyUI for img2img
+
+6. imageGenerator.js - IMAGE GENERATION LOGIC
+---------------------------------------------
+PURPOSE: Coordinates the image generation process and result display
+DEPENDENCIES: utils.js, apiClient.js, settingsManager.js
+KEY FEATURES:
+- Dual mode generation (text2img/img2img)
+- Automatic workflow selection based on uploaded photo
+- Progress tracking and display
+- Image result processing and display
+- Gallery management with mode tracking
+- Toast notifications for new generations
+- Loading state management
+
+WORKFLOW:
+1. User clicks generate button
+2. Check if photo is uploaded (determines text2img vs img2img)
+3. If img2img: upload photo to ComfyUI first
+4. Scroll to image area and show loading
+5. Get current settings from settingsManager
+6. Get appropriate workflow (text2img or img2img) with settings applied
+7. Filter and update prompts
+8. Queue generation request with mode information
+9. Display results when received via WebSocket
+
+MAIN METHODS:
+- handleGenerate() - Main generation process
+- showLoadingState() - Show loading indicator
+- handleImageGenerated() - Process and display results
+- displayNewImages() - Create image elements in DOM
+
+7. photoUpload.js - PHOTO UPLOAD FUNCTIONALITY
+----------------------------------------------
+PURPOSE: Handles user photo uploads for img2img generation
+DEPENDENCIES: utils.js
+KEY FEATURES:
+- Camera capture support
+- File upload from device
+- Image preview functionality
+- File type validation (JPG/PNG only)
+- Photo reset and apply functionality
+- Memory management (URL cleanup)
+
+SUPPORTED ACTIONS:
+- Take photo with camera
+- Upload from device
+- Preview uploaded image
+- Reset/clear uploaded photo
+- Apply photo for img2img generation (triggers callback)
+
+MAIN METHODS:
+- handleFile() - Process uploaded/captured file
+- resetPhoto() - Clear current photo and uploaded name
+- applyPhoto() - Apply photo for img2img (calls callback)
+- setOnPhotoAppliedCallback() - Set callback for when photo is applied
+- getSelectedFile() - Get current file object
+- hasPhoto() - Check if photo is selected
+- getUploadedImageName() - Get ComfyUI filename after upload
+
+8. websocketHandler.js - WEBSOCKET COMMUNICATION
+------------------------------------------------
+PURPOSE: Manages real-time communication with ComfyUI via WebSocket
+DEPENDENCIES: imageGenerator.js
+KEY FEATURES:
+- Automatic connection establishment
+- Progress update handling
+- Image generation result processing
+- Error handling and logging
+- Automatic reconnection on disconnect
+- Connection state monitoring
+
+MESSAGE TYPES HANDLED:
+- "progress" - Update generation progress bar
+- "executed" - Process completed generation results
+
+MAIN METHODS:
+- handleMessage() - Process incoming WebSocket messages
+- handleProgress() - Update progress indicators
+- handleExecuted() - Process generation results
+- send() - Send message to ComfyUI
+- isConnected() - Check connection status
+
+====================================
+DATA FLOW
+====================================
+
+1. USER INTERACTION:
+   User interacts with HTML interface (prompts, styles, settings)
+   ↓
+2. MODULE COORDINATION:
+   app.js coordinates between modules based on user actions
+   ↓
+3. SETTINGS COLLECTION:
+   settingsManager and styleManager collect current user preferences
+   ↓
+4. API COMMUNICATION:
+   apiClient loads workflow, applies settings, filters content
+   ↓
+5. GENERATION REQUEST:
+   imageGenerator sends request via apiClient to ComfyUI
+   ↓
+6. WEBSOCKET UPDATES:
+   websocketHandler receives progress updates and results
+   ↓
+7. RESULT DISPLAY:
+   imageGenerator displays results and updates gallery
+
+====================================
+INITIALIZATION SEQUENCE
+====================================
+
+1. DOM loads → app.js creates App instance
+2. App generates unique client ID
+3. App initializes modules in dependency order:
+   - apiClient (no dependencies)
+   - settingsManager (depends on utils)
+   - styleManager (depends on utils)
+   - photoUpload (depends on utils)
+   - imageGenerator (depends on apiClient, settingsManager, photoUpload)
+   - websocketHandler (depends on imageGenerator)
+   - photoUpload callback setup (connects photoUpload to imageGenerator)
+4. Each module sets up its event listeners
+5. App is ready for user interaction
+
+====================================
+ERROR HANDLING
+====================================
+
+- apiClient: Network errors, workflow loading failures
+- imageGenerator: Generation failures, invalid settings
+- websocketHandler: Connection errors, message parsing errors
+- photoUpload: File type validation, upload errors
+- app.js: Global error handling and user notifications
+
+====================================
+BROWSER COMPATIBILITY
+====================================
+
+REQUIREMENTS:
+- ES6 module support (modern browsers)
+- WebSocket support
+- File API for photo uploads
+- Crypto API for UUID generation
+
+TESTED ON:
+- Chrome 80+
+- Firefox 75+  
+- Safari 14+
+- Edge 80+
+
+====================================
+CUSTOMIZATION GUIDE
+====================================
+
+TO ADD NEW STYLES:
+1. Add new entry to stylePrompts object in styleManager.js
+2. Add corresponding HTML button in index.html
+3. Add preview image to images/ folder
+
+TO MODIFY SETTINGS:
+1. Update settingsManager.js for new controls
+2. Update HTML form elements
+3. Update apiClient.js to handle new parameters
+
+TO ADD NEW FEATURES:
+1. Create new module file following existing pattern
+2. Import and initialize in app.js
+3. Add necessary HTML elements
+4. Update documentation
+
+IMG2IMG FUNCTIONALITY:
+- Automatically detects when user uploads a photo
+- Switches from fastSDXLtext2img.json to fastSDXLimg2img.json workflow
+- Uploads photo to ComfyUI before generation
+- Uses depth preprocessing and ControlNet for guided generation
+- Gallery shows generation mode (Text2Img vs Img2Img) with image name
+
+====================================
+MAINTENANCE NOTES
+====================================
+
+- All modules use ES6 classes for consistency
+- Error handling should be added to console.log/warn/error
+- Event listeners are cleaned up in module destructors
+- Memory leaks are prevented by proper URL.revokeObjectURL calls
+- WebSocket reconnection prevents permanent disconnections
+
+====================================
+SECURITY CONSIDERATIONS
+====================================
+
+- Content filtering prevents inappropriate generations
+- File upload validation prevents malicious files
+- WebSocket origin validation should be implemented server-side
+- User input sanitization prevents XSS attacks
+- Rate limiting should be implemented server-side

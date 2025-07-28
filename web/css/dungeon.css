@@ -178,7 +178,7 @@ progress::-webkit-progress-value{
 
 /* Hide Riusa button for the main image */
 #results .image-actions .reuse-btn {
-  display: none;
+  display: flex;
 }
 
 /* Style for gallery items */
@@ -266,7 +266,15 @@ button {
   cursor: pointer;
   transition: background 0.2s;
 }
-
+button:hover, button:focus{
+  filter: brightness(90%);
+  
+}
+button.secondary {
+  background-color: #ddd;
+    font-weight: 400;
+    padding: 7px 14px;
+}
 button .material-symbols-outlined {
   font-size: 1.2rem;
   vertical-align: middle;
@@ -546,6 +554,61 @@ button .material-symbols-outlined {
   height: auto;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/**/
+#use-photo-section{
+  margin-top: 40px;
+}
+.use-photo-text{
+  display: flex;
+  gap:10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 10px 10px 12px;
+  border-radius: 10px;
+  background: #f8f8f8;
+  border:1px solid  #ddd;
+}
+.use-photo-text button{
+  flex-shrink: 0;
+}
+
+.use-photo-text p{
+  margin: 0;
+  font-size: 14px;
+  word-break: break-word;
+}
+.use-photo-btnWarp{
+  width: fit-content;
+  display: flex;
+  gap:10px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 auto;
+}
+.use-photo-btnWarp button{
+  line-height: 1;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+#previewArea {
+  margin-top: 10px;
+  border: 2px dashed #ccc;
+  padding: 10px;
+  border-radius: 8px;
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+ 
+  background: #f9f9f9 url(../images/image.svg) center no-repeat;
+}
+
+#previewArea img {
+  max-width: 100%;
+  max-height: 300px;
+  object-fit: contain;
 }
 
 /* FOOTER fisso in fondo */

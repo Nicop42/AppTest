@@ -2,6 +2,8 @@ import os
 import json
 from aiohttp import web
 import server
+import aiofiles
+import uuid
 
 # === Directory Paths ===
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -9,6 +11,7 @@ WEBROOT = os.path.join(BASE_DIR, "web")
 
 # 💡 Point to ComfyUI's REAL output directory
 OUTPUT_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "output"))
+INPUT_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "input"))
 
 # === CORS Middleware ===
 @web.middleware
@@ -40,6 +43,43 @@ server.PromptServer.instance.routes.static("/images/", path=os.path.join(WEBROOT
 
 # ✅ Serve real ComfyUI output folder at /output/
 server.PromptServer.instance.routes.static("/output/", path=OUTPUT_DIR)
+
+# ✅ NEW: Image Upload Endpoint
+@server.PromptServer.instance.routes.post("/upload/image")
+async def upload_image(request):
+    try:
+        reader = await request.multipart()
+        field = await reader.next()
+        
+        if field.name != 'image':
+            return web.json_response({"error": "No image field found"}, status=400)
+        
+        # Generate unique filename
+        filename = f"{uuid.uuid4().hex}_{field.filename}"
+        filepath = os.path.join(INPUT_DIR, filename)
+        
+        # Ensure input directory exists
+        os.makedirs(INPUT_DIR, exist_ok=True)
+        
+        # Save the uploaded file
+        async with aiofiles.open(filepath, 'wb') as f:
+            while True:
+                chunk = await field.read_chunk()
+                if not chunk:
+                    break
+                await f.write(chunk)
+        
+        print(f"📁 Image uploaded: {filename}")
+        
+        return web.json_response({
+            "name": filename,
+            "subfolder": "",
+            "type": "input"
+        })
+        
+    except Exception as e:
+        print("❌ Error uploading image:", str(e))
+        return web.json_response({"error": str(e)}, status=500)
 
 # === POST /prompt ===
 @server.PromptServer.instance.routes.post("/prompt")

@@ -191,6 +191,25 @@ export class ImageGenerator {
       console.log("📦 Moving previous image to gallery");
       DOMUtils.$("#gallery").style.display = "block";
 
+      // Add reuse buttons to images being moved to gallery
+      const imageWrappers = existingImage.querySelectorAll(".image-wrapper");
+      imageWrappers.forEach(wrapper => {
+        const actions = wrapper.querySelector(".image-actions");
+        const existingReuseBtn = actions.querySelector(".reuse-btn");
+        
+        // Only add reuse button if it doesn't already exist
+        if (!existingReuseBtn) {
+          const img = wrapper.querySelector("img");
+          const reuseBtn = document.createElement("button");
+          reuseBtn.className = "reuse-btn";
+          reuseBtn.innerHTML = '<span class="material-symbols-outlined">replay</span> Riusa';
+          reuseBtn.onclick = () => {
+            console.log("Reuse image:", img.src);
+          };
+          actions.appendChild(reuseBtn);
+        }
+      });
+
       const galleryItem = document.createElement("div");
       galleryItem.className = "gallery-item";
 

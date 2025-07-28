@@ -178,7 +178,7 @@ progress::-webkit-progress-value{
 
 /* Hide Riusa button for the main image */
 #results .image-actions .reuse-btn {
-  display: flex;
+  display: none;
 }
 
 /* Style for gallery items */
@@ -537,6 +537,11 @@ button .material-symbols-outlined {
 .gallery-item .image-actions button{
   width: fit-content;
   font-weight: 400;
+}
+
+/* Ensure reuse button is visible in gallery */
+.gallery-item .image-actions .reuse-btn {
+  display: flex;
 }
 
 .prompt-info p{

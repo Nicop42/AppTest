@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Style Configuration Guide</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .config-example { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .step { background: #e8f5e8; padding: 10px; margin: 10px 0; border-left: 4px solid #4CAF50; }
+        code { background: #f0f0f0; padding: 2px 4px; border-radius: 3px; }
+        .warning { background: #fff3cd; padding: 10px; border-left: 4px solid #ffc107; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🎨 Easy Style Configuration Guide</h1>
+    
+    <p>Your style system has been completely redesigned to be much easier to manage! Now you can control everything from one simple file.</p>
+    
+    <h2>📁 What Changed</h2>
+    <ul>
+        <li><strong>All styles are now in one place:</strong> <code>js/styleConfig.js</code></li>
+        <li><strong>Images are automatically updated</strong> based on your configuration</li>
+        <li><strong>Both positive AND negative prompts</strong> are supported</li>
+        <li><strong>Style names in the UI</strong> update automatically</li>
+    </ul>
+    
+    <h2>🚀 How to Edit Styles</h2>
+    
+    <div class="step">
+        <strong>Step 1:</strong> Open <code>js/styleConfig.js</code> in your text editor
+    </div>
+    
+    <div class="step">
+        <strong>Step 2:</strong> Find the style you want to edit (e.g., <code>style1</code>, <code>style2</code>, etc.)
+    </div>
+    
+    <div class="step">
+        <strong>Step 3:</strong> Modify any of these fields:
+        <ul>
+            <li><code>image</code> - The filename in your images folder</li>
+            <li><code>name</code> - What appears on the UI button</li>
+            <li><code>positivePrompt</code> - Added to positive prompt when selected</li>
+            <li><code>negativePrompt</code> - Added to negative prompt when selected</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>Step 4:</strong> Save the file and refresh your webpage
+    </div>
+    
+    <h2>📝 Example Configuration</h2>
+    <div class="config-example">
+<pre>style11: {
+  image: "surreal_style.png",           // ← Your image file
+  name: "Dreamy Surreal",               // ← Button text in UI  
+  positivePrompt: "surreal painting, dreamlike, vibrant colors, dali style",
+  negativePrompt: "realistic, normal, mundane, logical"
+}</pre>
+    </div>
+    
+    <h2>🎯 Current Style Mappings</h2>
+    <p>Here's what each style currently shows:</p>
+    <ul>
+        <li><strong>style1:</strong> Renaissance (gatto1.png)</li>
+        <li><strong>style2:</strong> Sketch (gatto2.png)</li>
+        <li><strong>style3:</strong> Impressionist (gatto3.png)</li>
+        <li><strong>style4:</strong> Cartoon (gatto4.jpg)</li>
+        <li><strong>style5:</strong> Watercolor (gatto5.png)</li>
+        <li><strong>style6:</strong> Cubism (gatto6.png)</li>
+        <li><strong>style7:</strong> Abstract (gatto7.png)</li>
+        <li><strong>style8:</strong> Art Nouveau (gatto8.png)</li>
+        <li><strong>style9:</strong> Vector (gatto9.png)</li>
+        <li><strong>style10:</strong> Pop Art (gatto10.png)</li>
+        <li><strong>style11:</strong> Surrealism (gatto11.png) ✅ Fixed!</li>
+        <li><strong>style12:</strong> Claymation (gatto12.png) ✅ Fixed!</li>
+    </ul>
+    
+    <div class="warning">
+        <strong>⚠️ Important:</strong> Make sure your image files exist in the <code>images/</code> folder before referencing them in the config!
+    </div>
+    
+    <h2>🔧 Advanced Tips</h2>
+    <ul>
+        <li><strong>Adding New Styles:</strong> Copy an existing style block and change the ID (e.g., <code>style13</code>)</li>
+        <li><strong>Removing Styles:</strong> Delete the entire style block or comment it out with <code>/*</code> and <code>*/</code></li>
+        <li><strong>Testing Changes:</strong> Check the browser console for any error messages</li>
+        <li><strong>Backup:</strong> Keep a backup copy of your working config before making major changes</li>
+    </ul>
+    
+    <h2>🆘 Troubleshooting</h2>
+    <p>If a style button doesn't update:</p>
+    <ol>
+        <li>Check that the image file exists in the <code>images/</code> folder</li>
+        <li>Verify the style ID matches what's in your HTML (data-stile attribute)</li>
+        <li>Look for JavaScript errors in your browser's developer console</li>
+        <li>Make sure you saved the <code>styleConfig.js</code> file</li>
+    </ol>
+    
+    <p><strong>Happy styling! 🎨</strong></p>
+</body>
+</html>

@@ -229,6 +229,71 @@ export class PhotoUpload {
     return this.uploadedImageURL;
   }
 
+  // Method to restore an image from server for reuse functionality
+  async restoreImageFromServer(imageName) {
+    console.log("🔄 Attempting to restore image from server:", imageName);
+    
+    if (!imageName) {
+      console.warn("❌ No image name provided for restoration");
+      return false;
+    }
+
+    try {
+      // ComfyUI stores uploaded images in the input folder and serves them via /view endpoint
+      const possiblePaths = [
+        `/view?filename=${imageName}&subfolder=&type=input`,
+        `/view?filename=${imageName}&type=input`,
+        `/input/${imageName}`,
+        `/upload/${imageName}`
+      ];
+
+      let imageUrl = null;
+      let response = null;
+
+      // Try each possible path until we find the image
+      for (const path of possiblePaths) {
+        try {
+          console.log(`🔍 Trying to fetch image from: ${path}`);
+          response = await fetch(path);
+          if (response.ok) {
+            imageUrl = path;
+            console.log(`✅ Found image at: ${path}`);
+            break;
+          }
+        } catch (e) {
+          console.log(`❌ Failed to fetch from ${path}:`, e.message);
+          continue;
+        }
+      }
+
+      if (!imageUrl || !response.ok) {
+        console.warn("❌ Could not find image on server, falling back to manual upload");
+        console.log("📋 Attempted paths:", possiblePaths);
+        console.log("💾 ComfyUI should store images in: C:\\Users\\StudiumLab\\ComfyUI_windows_portable\\ComfyUI\\input");
+        alert(`Immagine originale non trovata sul server: ${imageName}\n\nL'immagine dovrebbe essere in: C:\\Users\\StudiumLab\\ComfyUI_windows_portable\\ComfyUI\\input\n\nPer riprodurre esattamente lo stesso risultato, carica nuovamente l'immagine manualmente.`);
+        return false;
+      }
+
+      // Convert response to blob and then to file
+      const blob = await response.blob();
+      const file = new File([blob], imageName, { type: blob.type });
+
+      // Clear any existing image first
+      this.resetPhoto();
+
+      // Restore the image to the upload component
+      this.handleFile(file);
+      
+      console.log("✅ Image restored successfully from server:", imageName);
+      return true;
+
+    } catch (error) {
+      console.error("❌ Error restoring image from server:", error);
+      alert(`Errore nel ripristino dell'immagine: ${error.message}\n\nCarica nuovamente l'immagine manualmente.`);
+      return false;
+    }
+  }
+
   hasPhoto() {
     const hasPhoto = this.selectedFile !== null;
     console.log("🤔 hasPhoto check:", hasPhoto);

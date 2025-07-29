@@ -1,61 +1,25 @@
 // Style Management Module
 import { DOMUtils } from './utils.js';
+import { STYLE_CONFIG } from './styleConfig.js';
 
 export class StyleManager {
   constructor() {
-    this.stylePrompts = {
-      style1: {
-        prompt: "digital art, highly detailed, vibrant colors, 4k, trending on artstation",
-        name: "Digital Art",
-      },
-      style2: {
-        prompt: "oil painting, impasto brushstrokes, rich textures, classical art style",
-        name: "Oil Painting",
-      },
-      style3: {
-        prompt: "anime style, cel-shaded, vibrant colors, sharp lines, studio ghibli inspired",
-        name: "Anime Style",
-      },
-      style4: {
-        prompt: "pencil sketch, hatching, detailed linework, monochrome",
-        name: "Pencil Sketch",
-      },
-      style5: {
-        prompt: "watercolor painting, soft edges, pastel colors, dreamy atmosphere",
-        name: "Watercolor",
-      },
-      style6: {
-        prompt: "cyberpunk, neon lights, futuristic, rain-soaked streets, 4k",
-        name: "Cyberpunk",
-      },
-      style7: {
-        prompt: "low poly, geometric shapes, minimalist, vibrant colors",
-        name: "Low Poly",
-      },
-      style8: {
-        prompt: "steampunk, brass and copper, gears, vintage aesthetic",
-        name: "Steampunk",
-      },
-      style9: {
-        prompt: "pixel art, 8-bit, retro gaming style, vibrant colors",
-        name: "Pixel Art",
-      },
-      style10: {
-        prompt: "surrealism, dreamlike, impossible architecture, vibrant colors",
-        name: "Surrealism",
-      },
-      style11: {
-        prompt: "chalk drawing, on blackboard, dust and chalk particles",
-        name: "Chalk Drawing",
-      },
-      style12: {
-        prompt: "claymation, stop motion, soft lighting, tactile textures",
-        name: "Claymation",
-      },
-    };
+    // ✨ STYLES ARE NOW CONFIGURED IN styleConfig.js ✨
+    // Edit styleConfig.js to manage all your styles in one place!
+    this.styleConfig = STYLE_CONFIG;
+
+    // Convert to old format for compatibility (will be updated throughout the code)
+    this.stylePrompts = {};
+    Object.entries(this.styleConfig).forEach(([key, config]) => {
+      this.stylePrompts[key] = {
+        prompt: config.positivePrompt,
+        name: config.name
+      };
+    });
 
     this.selectedStyles = new Set();
     this.positiveInput = DOMUtils.$("#positive");
+    this.negativeInput = DOMUtils.$("#negative");
     this.bloccoAltriStili = DOMUtils.$("#more-styles");
     this.toggleStili = DOMUtils.$("#toggle-styles");
 
@@ -63,10 +27,34 @@ export class StyleManager {
   }
 
   initialize() {
-    this.updateStyleNames();
+    this.updateStyleElements();
     this.setupEventListeners();
   }
 
+  // ✨ NEW METHOD: Updates both images and names from the config
+  updateStyleElements() {
+    Object.entries(this.styleConfig).forEach(([styleId, config]) => {
+      // Update style name
+      const nameElement = document.querySelector(
+        `.style-btn[data-stile="${styleId}"] .nome-stile`
+      );
+      if (nameElement) {
+        nameElement.textContent = config.name;
+      }
+
+      // Update style image
+      const imageElement = document.querySelector(
+        `.style-btn[data-stile="${styleId}"] img`
+      );
+      if (imageElement) {
+        const newSrc = `images/${config.image}`;
+        imageElement.src = newSrc;
+        imageElement.alt = config.name;
+      }
+    });
+  }
+
+  // Keep old method for compatibility but make it use the new system
   updateStyleNames() {
     Object.entries(this.stylePrompts).forEach(([styleId, styleData]) => {
       const styleElement = document.querySelector(
@@ -102,31 +90,34 @@ export class StyleManager {
     const stileBlock = btn.closest(".stile-block");
     const isActive = stileBlock.classList.contains("active");
     const styleId = btn.dataset.stile;
-    const styleData = this.stylePrompts[styleId];
+    const styleConfig = this.styleConfig[styleId];
 
-    if (!styleData) return;
+    if (!styleConfig) return;
 
     stileBlock.classList.toggle("active");
 
     if (!isActive) {
       this.selectedStyles.add(styleId);
-      console.log(`Stile selezionato: ${styleData.name}`);
     } else {
       this.selectedStyles.delete(styleId);
-      console.log(`Stile rimosso: ${styleData.name}`);
     }
 
-    this.updatePromptWithStyles();
+    this.updatePromptsWithStyles();
   }
 
-  updatePromptWithStyles() {
+  updatePromptsWithStyles() {
+    this.updatePositivePrompt();
+    this.updateNegativePrompt();
+  }
+
+  updatePositivePrompt() {
     let currentPrompt = this.positiveInput.value;
 
     // Remove all style prompts from current text
-    Object.entries(this.stylePrompts).forEach(([id, data]) => {
-      if (currentPrompt.includes(data.prompt)) {
+    Object.entries(this.styleConfig).forEach(([id, config]) => {
+      if (currentPrompt.includes(config.positivePrompt)) {
         const regex = new RegExp(
-          `\\s*,\\s*${data.prompt.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}|${data.prompt.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*,?\\s*`,
+          `\\s*,\\s*${config.positivePrompt.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}|${config.positivePrompt.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*,?\\s*`,
           "g"
         );
         currentPrompt = currentPrompt.replace(regex, "").trim();
@@ -136,23 +127,80 @@ export class StyleManager {
     // Add back selected styles
     let newPrompt = currentPrompt;
     this.selectedStyles.forEach((id) => {
-      const style = this.stylePrompts[id];
-      if (style && style.prompt) {
-        newPrompt = newPrompt ? `${newPrompt}, ${style.prompt}` : style.prompt;
+      const config = this.styleConfig[id];
+      if (config && config.positivePrompt) {
+        newPrompt = newPrompt ? `${newPrompt}, ${config.positivePrompt}` : config.positivePrompt;
       }
     });
 
     this.positiveInput.value = newPrompt;
   }
 
+  updateNegativePrompt() {
+    let currentNegativePrompt = this.negativeInput.value;
+
+    // Remove all negative style prompts from current text
+    Object.entries(this.styleConfig).forEach(([id, config]) => {
+      if (config.negativePrompt && currentNegativePrompt.includes(config.negativePrompt)) {
+        const regex = new RegExp(
+          `\\s*,\\s*${config.negativePrompt.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}|${config.negativePrompt.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*,?\\s*`,
+          "g"
+        );
+        currentNegativePrompt = currentNegativePrompt.replace(regex, "").trim();
+      }
+    });
+
+    // Add back selected negative prompts
+    let newNegativePrompt = currentNegativePrompt;
+    this.selectedStyles.forEach((id) => {
+      const config = this.styleConfig[id];
+      if (config && config.negativePrompt) {
+        newNegativePrompt = newNegativePrompt ? `${newNegativePrompt}, ${config.negativePrompt}` : config.negativePrompt;
+      }
+    });
+
+    this.negativeInput.value = newNegativePrompt;
+  }
+
   getSelectedStylesPrompt() {
     const selectedPrompts = [];
     this.selectedStyles.forEach((id) => {
-      const style = this.stylePrompts[id];
-      if (style && style.prompt) {
-        selectedPrompts.push(style.prompt);
+      const config = this.styleConfig[id];
+      if (config && config.positivePrompt) {
+        selectedPrompts.push(config.positivePrompt);
       }
     });
     return selectedPrompts.join(", ");
+  }
+
+  // ✨ NEW METHOD: Get selected negative prompts
+  getSelectedNegativePrompts() {
+    const selectedNegativePrompts = [];
+    this.selectedStyles.forEach((id) => {
+      const config = this.styleConfig[id];
+      if (config && config.negativePrompt) {
+        selectedNegativePrompts.push(config.negativePrompt);
+      }
+    });
+    return selectedNegativePrompts.join(", ");
+  }
+
+  // ✨ NEW METHOD: Get style config for easy editing
+  getStyleConfig() {
+    return this.styleConfig;
+  }
+
+  // ✨ NEW METHOD: Update a specific style config
+  updateStyleConfig(styleId, newConfig) {
+    if (this.styleConfig[styleId]) {
+      this.styleConfig[styleId] = { ...this.styleConfig[styleId], ...newConfig };
+      // Update the compatibility object
+      this.stylePrompts[styleId] = {
+        prompt: this.styleConfig[styleId].positivePrompt,
+        name: this.styleConfig[styleId].name
+      };
+      // Refresh the UI
+      this.updateStyleElements();
+    }
   }
 }

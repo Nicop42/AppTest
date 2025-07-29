@@ -8,6 +8,7 @@ export class ImageGenerator {
     this.photoUpload = photoUpload;
     this.promptQueue = [];
     this.generationCount = 0;
+    this.generationHistory = []; // Store complete generation parameters for reuse
     
     // DOM elements
     this.contImage = DOMUtils.$("#created-img-container");
@@ -136,6 +137,21 @@ export class ImageGenerator {
       // Update seed display
       this.seedInput.value = updatedWorkflow["3"].inputs.seed;
 
+      // Store complete generation parameters for reuse
+      const generationParams = {
+        positivePrompt: filteredPositive,
+        negativePrompt: filteredNegative,
+        seed: updatedWorkflow["3"].inputs.seed,
+        settings: {
+          ...settings,
+          useCustomSeed: true,
+          customSeed: updatedWorkflow["3"].inputs.seed
+        },
+        mode: useImg2Img ? 'img2img' : 'text2img',
+        uploadedImageName: uploadedImageName,
+        timestamp: Date.now()
+      };
+
       // Show loading state
       this.showLoadingState();
       
@@ -144,7 +160,8 @@ export class ImageGenerator {
         pos: filteredPositive, 
         neg: filteredNegative,
         mode: useImg2Img ? 'img2img' : 'text2img',
-        imageName: uploadedImageName
+        imageName: uploadedImageName,
+        generationParams: generationParams  // Include full generation parameters
       });
 
       console.log("📤 Sending generation request...");
@@ -191,6 +208,8 @@ export class ImageGenerator {
       console.log("📦 Moving previous image to gallery");
       DOMUtils.$("#gallery").style.display = "block";
 
+      const prompts = this.promptQueue.shift() || { pos: "", neg: "", mode: "text2img", imageName: null, generationParams: null };
+
       // Add reuse buttons to images being moved to gallery
       const imageWrappers = existingImage.querySelectorAll(".image-wrapper");
       imageWrappers.forEach(wrapper => {
@@ -203,8 +222,14 @@ export class ImageGenerator {
           const reuseBtn = document.createElement("button");
           reuseBtn.className = "reuse-btn";
           reuseBtn.innerHTML = '<span class="material-symbols-outlined">replay</span> Riusa';
-          reuseBtn.onclick = () => {
-            console.log("Reuse image:", img.src);
+          reuseBtn.onclick = async () => {
+            console.log("🔄 Reusing parameters for image:", img.src);
+            if (prompts.generationParams) {
+              await this.reuseGenerationParams(prompts.generationParams);
+            } else {
+              console.warn("⚠️ No generation parameters found for this image");
+              alert("Impossibile riutilizzare i parametri: dati di generazione non disponibili per questa immagine.");
+            }
           };
           actions.appendChild(reuseBtn);
         }
@@ -215,8 +240,7 @@ export class ImageGenerator {
 
       const promptInfo = document.createElement("div");
       promptInfo.className = "prompt-info";
-
-      const prompts = this.promptQueue.shift() || { pos: "", neg: "", mode: "text2img", imageName: null };
+      
       const modeDisplay = prompts.mode === 'img2img' ? `🖼️ Img2Img (${prompts.imageName})` : '✍️ Text2Img';
       promptInfo.innerHTML = `
         <p><strong>Mode:</strong> ${modeDisplay}</p>
@@ -267,5 +291,48 @@ export class ImageGenerator {
 
   updateProgress(max, value) {
     DOMUtils.updateProgress(this.progressbar, max, value);
+  }
+
+  // Restore generation parameters to the UI
+  async reuseGenerationParams(generationParams) {
+    console.log("🔄 Reusing generation parameters:", generationParams);
+    
+    // Restore prompts
+    if (this.positiveInput && generationParams.positivePrompt !== undefined) {
+      this.positiveInput.value = generationParams.positivePrompt;
+    }
+    
+    if (this.negativeInput && generationParams.negativePrompt !== undefined) {
+      this.negativeInput.value = generationParams.negativePrompt;
+    }
+    
+    // Restore seed in main interface
+    if (this.seedInput && generationParams.seed !== undefined) {
+      this.seedInput.value = generationParams.seed;
+    }
+    
+    // Restore settings in settings manager (filters)
+    if (generationParams.settings && this.settingsManager) {
+      this.settingsManager.applySettings(generationParams.settings);
+    }
+    
+    // Handle img2img mode
+    if (generationParams.mode === 'img2img' && generationParams.uploadedImageName && this.photoUpload) {
+      console.log("🖼️ Attempting to restore img2img image:", generationParams.uploadedImageName);
+      
+      try {
+        const restored = await this.photoUpload.restoreImageFromServer(generationParams.uploadedImageName);
+        if (restored) {
+          console.log("✅ Image restored automatically for img2img mode");
+        } else {
+          console.log("⚠️ Could not restore image automatically, user will need to upload manually");
+        }
+      } catch (error) {
+        console.error("❌ Error during image restoration:", error);
+        alert(`Errore nel ripristino automatico dell'immagine: ${error.message}\n\nCarica nuovamente l'immagine manualmente.`);
+      }
+    }
+    
+    console.log("✅ Generation parameters restored successfully");
   }
 }

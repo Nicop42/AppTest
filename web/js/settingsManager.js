@@ -148,4 +148,42 @@ export class SettingsManager {
         return { width: 1024, height: 1024 };
     }
   }
+
+  // Toggle seed input based on toggle state
+  toggleSeedInput() {
+    if (this.seedToggleFilter && this.seedInputFilter) {
+      this.seedInputFilter.disabled = !this.seedToggleFilter.checked;
+      
+      if (this.seedToggleFilter.checked && this.seedInputFilter.value === "") {
+        this.seedInputFilter.value = DOMUtils.generateSeed();
+      }
+    }
+  }
+
+  // Apply settings back to the UI
+  applySettings(settings) {
+    if (settings.useCustomSeed !== undefined && this.seedToggleFilter) {
+      this.seedToggleFilter.checked = settings.useCustomSeed;
+      this.toggleSeedInput();
+    }
+    
+    if (settings.customSeed !== undefined && this.seedInputFilter) {
+      this.seedInputFilter.value = settings.customSeed || '';
+    }
+    
+    if (settings.quality !== undefined && this.qualitySlider && this.qualityVal) {
+      this.qualitySlider.value = settings.quality;
+      this.qualityVal.textContent = settings.quality;
+    }
+    
+    if (settings.definition !== undefined && this.definitionSlider && this.definitionVal) {
+      this.definitionSlider.value = settings.definition;
+      this.definitionVal.textContent = settings.definition;
+    }
+    
+    if (settings.format !== undefined) {
+      this.selectedFormat = settings.format;
+      this.updateFormatButtons(settings.format);
+    }
+  }
 }

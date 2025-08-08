@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>StyleConfig Test</title>
+</head>
+<body>
+    <h1>Style Config Test</h1>
+    
+    <!-- Simple test button -->
+    <div class="stile-block">
+        <button type="button" data-stile="style12" class="style-btn">
+            <img src="images/gatto12.png" alt="Stile 12" width="100" height="100" />
+            <span class="nome-stile">Nome stile</span>
+        </button>
+    </div>
+
+    <script type="module">
+        import { STYLE_CONFIG } from './js/styleConfig.js';
+        
+        console.log("✅ STYLE_CONFIG loaded:", STYLE_CONFIG);
+        console.log("✅ style12 name should be:", STYLE_CONFIG.style12.name);
+        
+        // Wait for DOM and then update the style name
+        document.addEventListener('DOMContentLoaded', function() {
+            const style12Element = document.querySelector('.style-btn[data-stile="style12"] .nome-stile');
+            if (style12Element) {
+                style12Element.textContent = STYLE_CONFIG.style12.name;
+                console.log("✅ Updated style12 name to:", STYLE_CONFIG.style12.name);
+                style12Element.style.backgroundColor = 'yellow'; // Visual indicator that it worked
+            } else {
+                console.log("❌ Could not find style12 element");
+            }
+        });
+    </script>
+</body>
+</html>

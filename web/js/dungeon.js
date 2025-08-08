@@ -110,7 +110,8 @@
   }
 
   // Initialize style names when the page loads
-  document.addEventListener("DOMContentLoaded", updateStyleNames);
+  // ❌ DISABLED: This was overriding the new styleConfig.js system
+  // document.addEventListener("DOMContentLoaded", updateStyleNames);
 
   toggleStili.addEventListener("click", (e) => {
     e.preventDefault();

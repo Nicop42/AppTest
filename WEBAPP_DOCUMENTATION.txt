@@ -13,9 +13,14 @@ This webapp connects to a ComfyUI session to generate AI images through a person
 Users can:
 - Enter positive/negative prompts
 - Select from 12 predefined art styles
-- Upload their own photos for img2img generation (NEW: automatically switches workflows)
+- Upload their own photos for img2img generation with automatic workflow switching
+- Automatic proportional image resizing (shortest side = 1024px)
+- Mobile-friendly image processing with EXIF orientation correction
 - Adjust quality, format, and other settings
 - View generated images and maintain a gallery with generation mode tracking
+- Advanced ControlNet integration with depth mapping and pose detection
+- Memory optimization for mobile devices
+- Background processing with WebSocket real-time updates
 
 ====================================
 FILE STRUCTURE
@@ -30,12 +35,12 @@ web/
 │   ├── utils.js              - DOM utilities and helper functions
 │   ├── styleManager.js       - Style selection and management
 │   ├── settingsManager.js    - Settings and filters management
-│   ├── apiClient.js          - ComfyUI API communication
-│   ├── imageGenerator.js     - Image generation logic
-│   ├── photoUpload.js        - Photo upload functionality
+│   ├── apiClient.js          - ComfyUI API communication with workflow validation
+│   ├── imageGenerator.js     - Image generation logic with dimension handling
+│   ├── photoUpload.js        - Photo upload with mobile optimization
 │   ├── websocketHandler.js   - WebSocket communication
-│   ├── fastSDXLtext2img.json - ComfyUI workflow configuration
-│   └── fastSDXLimg2img.json  - ComfyUI img2img workflow
+│   ├── fastSDXLtext2img.json - ComfyUI text2img workflow configuration
+│   └── fastSDXLimg2img.json  - ComfyUI img2img workflow with ControlNet
 └── images/                   - Style preview images
 
 ====================================
@@ -48,6 +53,10 @@ PURPOSE: Initializes and coordinates all other modules
 DEPENDENCIES: All other modules
 KEY FEATURES:
 - Creates unique client ID for ComfyUI session
+- Initializes all modules in correct order
+- Sets up photo upload callback with dimension handling
+- Coordinates communication between modules
+- Error handling and logging
 - Initializes all modules in correct order
 - Provides global access to modules via window.app
 - Handles application lifecycle (init/destroy)
@@ -131,14 +140,39 @@ MAIN METHODS:
 - resetFilters() - Reset all settings to defaults
 - applyFilters() - Apply and return current filter settings
 
-5. apiClient.js - COMFYUI API COMMUNICATION
-------------------------------------------
-PURPOSE: Handles all communication with ComfyUI backend
+5. apiClient.js - COMFYUI API COMMUNICATION WITH VALIDATION
+-----------------------------------------------------------
+PURPOSE: Handles all communication with ComfyUI backend with enhanced validation
 DEPENDENCIES: utils.js
 KEY FEATURES:
 - Dual workflow loading and caching (text2img + img2img)
-- Prompt queuing to ComfyUI
-- Content filtering and censorship
+- Workflow validation system (prevents problematic nodes)
+- Prompt queuing to ComfyUI with error handling
+- Content filtering and censorship for inappropriate content
+- Image upload functionality with mobile optimization
+- Dynamic workflow modification based on image dimensions
+- Proportional resizing calculation (shortest side = 1024px)
+- Memory-optimized settings for mobile devices
+
+WORKFLOW VALIDATION:
+- Blocks problematic nodes that cause OOM errors
+- Currently allows: MarigoldDepthEstimation, DWPreprocessor
+- Blocks: DepthAnything (configurable list)
+- Automatic workflow optimization for mobile compatibility
+
+PROPORTIONAL RESIZING:
+- Calculates dimensions where shortest side = 1024px
+- Maintains original aspect ratio
+- Ensures dimensions are multiples of 8 (AI requirement)
+- Updates Image Resize node (94) automatically
+
+MAIN METHODS:
+- getWorkflowWithSettings() - Load and configure workflow with dimensions
+- validateWorkflow() - Check for problematic nodes
+- uploadImage() - Upload images to ComfyUI with processing
+- queuePrompt() - Send generation request to ComfyUI
+- updateWorkflowPrompts() - Update prompts with filtering
+- filterContent() - Remove inappropriate content from prompts
 - Workflow parameter updates (seed, steps, CFG, dimensions)
 - Image upload for img2img generation
 - Automatic workflow selection based on photo presence
@@ -157,63 +191,91 @@ MAIN METHODS:
 - updateWorkflowPrompts() - Update workflow with filtered prompts
 - uploadImage() - Upload user photo to ComfyUI for img2img
 
-6. imageGenerator.js - IMAGE GENERATION LOGIC
----------------------------------------------
-PURPOSE: Coordinates the image generation process and result display
-DEPENDENCIES: utils.js, apiClient.js, settingsManager.js
+6. imageGenerator.js - IMAGE GENERATION WITH DIMENSION HANDLING
+--------------------------------------------------------------
+PURPOSE: Coordinates the image generation process with intelligent dimension management
+DEPENDENCIES: utils.js, apiClient.js, settingsManager.js, photoUpload.js
 KEY FEATURES:
-- Dual mode generation (text2img/img2img)
+- Dual mode generation (text2img/img2img) with automatic workflow selection
 - Automatic workflow selection based on uploaded photo
-- Progress tracking and display
+- Dimension storage and management for proportional resizing
+- Progress tracking and display with detailed logging
 - Image result processing and display
 - Gallery management with mode tracking
 - Toast notifications for new generations
 - Loading state management
+- Generation history with reuse functionality
+- Error handling and user feedback
 
 WORKFLOW:
 1. User clicks generate button
 2. Check if photo is uploaded (determines text2img vs img2img)
-3. If img2img: upload photo to ComfyUI first
+3. If img2img: use stored image dimensions for proportional resizing
 4. Scroll to image area and show loading
 5. Get current settings from settingsManager
-6. Get appropriate workflow (text2img or img2img) with settings applied
-7. Filter and update prompts
+6. Get appropriate workflow with settings and dimensions applied
+7. Filter and update prompts with content validation
 8. Queue generation request with mode information
 9. Display results when received via WebSocket
+10. Store complete generation parameters for reuse
+
+DIMENSION MANAGEMENT:
+- Stores uploaded image dimensions from photoUpload
+- Passes dimensions to apiClient for proportional calculation
+- Handles both original and processed image dimensions
+- Supports automatic workflow adaptation
 
 MAIN METHODS:
-- handleGenerate() - Main generation process
+- handleGenerate() - Main generation process with dimension handling
+- setUploadedImageDimensions() - Store image dimensions for resizing
 - showLoadingState() - Show loading indicator
 - handleImageGenerated() - Process and display results
 - displayNewImages() - Create image elements in DOM
+- storeGenerationParameters() - Save complete generation data
+- restoreGenerationParameters() - Restore previous generation settings
 
-7. photoUpload.js - PHOTO UPLOAD FUNCTIONALITY
-----------------------------------------------
-PURPOSE: Handles user photo uploads for img2img generation
+7. photoUpload.js - MOBILE-OPTIMIZED PHOTO UPLOAD
+-------------------------------------------------
+PURPOSE: Handles user photo uploads with mobile device optimization
 DEPENDENCIES: utils.js
 KEY FEATURES:
-- Camera capture support
-- File upload from device
-- Image preview functionality
-- File type validation (JPG/PNG only)
+- Camera capture support for mobile devices
+- File upload from device with validation
+- Mobile image processing and optimization
+- EXIF orientation correction for mobile photos
+- Automatic image resizing for memory efficiency
+- Image preview functionality with dimension detection
+- File type validation (JPG/PNG only) with size limits
 - Photo reset and apply functionality
-- Memory management (URL cleanup)
+- Memory management with URL cleanup
+- Original dimension tracking for proportional resizing
 
-SUPPORTED ACTIONS:
-- Take photo with camera
-- Upload from device
-- Preview uploaded image
-- Reset/clear uploaded photo
-- Apply photo for img2img generation (triggers callback)
+MOBILE OPTIMIZATIONS:
+- Automatic resizing to max 512px (configurable)
+- EXIF orientation removal via canvas processing
+- Aggressive compression (75% JPEG quality)
+- Dimension alignment to multiples of 8
+- Memory usage logging and optimization
+- White background normalization
+- Size reduction tracking and reporting
+
+FILE HANDLING:
+- Supports up to 50MB uploads (with 10MB warning)
+- Processes images through HTML5 Canvas
+- Removes EXIF metadata that causes orientation issues
+- Forces JPEG format for consistency
+- Validates file types and sizes
 
 MAIN METHODS:
-- handleFile() - Process uploaded/captured file
+- handleFile() - Process uploaded/captured file with validation
+- processImageForMobile() - Optimize images for mobile compatibility
 - resetPhoto() - Clear current photo and uploaded name
-- applyPhoto() - Apply photo for img2img (calls callback)
-- setOnPhotoAppliedCallback() - Set callback for when photo is applied
+- applyPhoto() - Apply photo with processing for img2img
+- setOnPhotoAppliedCallback() - Set callback with dimension support
 - getSelectedFile() - Get current file object
+- getOriginalImageDimensions() - Get original dimensions before processing
 - hasPhoto() - Check if photo is selected
-- getUploadedImageName() - Get ComfyUI filename after upload
+- restoreImageFromServer() - Restore previously uploaded images
 
 8. websocketHandler.js - WEBSOCKET COMMUNICATION
 ------------------------------------------------
@@ -285,10 +347,10 @@ ERROR HANDLING
 ====================================
 
 - apiClient: Network errors, workflow loading failures
-- imageGenerator: Generation failures, invalid settings
-- websocketHandler: Connection errors, message parsing errors
-- photoUpload: File type validation, upload errors
+- websocketHandler: Connection errors, message parsing errors, retry logic
+- photoUpload: File type validation, upload errors, mobile processing failures
 - app.js: Global error handling and user notifications
+- Comprehensive logging system for debugging and monitoring
 
 ====================================
 BROWSER COMPATIBILITY
@@ -296,15 +358,56 @@ BROWSER COMPATIBILITY
 
 REQUIREMENTS:
 - ES6 module support (modern browsers)
-- WebSocket support
-- File API for photo uploads
+- WebSocket support for real-time updates
+- File API for photo uploads and processing
+- Canvas API for image processing and EXIF correction
 - Crypto API for UUID generation
+- HTML5 Camera API for mobile photo capture
 
 TESTED ON:
 - Chrome 80+
 - Firefox 75+  
 - Safari 14+
 - Edge 80+
+- Mobile browsers (iOS Safari, Chrome Mobile, Samsung Internet)
+
+MOBILE OPTIMIZATIONS:
+- Touch-friendly interface design
+- Automatic image compression for mobile photos
+- EXIF orientation correction
+- Memory-efficient processing
+- Responsive layout for small screens
+
+====================================
+ADVANCED FEATURES
+====================================
+
+PROPORTIONAL RESIZING SYSTEM:
+- Automatically calculates dimensions where shortest side = 1024px
+- Maintains original aspect ratio perfectly
+- Ensures dimensions are multiples of 8 (AI model requirement)
+- Works with any image aspect ratio
+- Updates workflow nodes dynamically
+
+MOBILE IMAGE PROCESSING:
+- EXIF orientation removal via HTML5 Canvas
+- Automatic resizing to prevent memory issues
+- Aggressive compression (75% JPEG quality)
+- White background normalization
+- Size reduction tracking and reporting
+
+CONTROLNET INTEGRATION:
+- MiDaS depth map generation for spatial understanding
+- DWPreprocessor pose detection for human figures
+- Dual ControlNet application with configurable strengths
+- Advanced image preprocessing pipeline
+- Memory-optimized processing chain
+
+GENERATION HISTORY:
+- Complete parameter storage for reuse
+- Automatic image restoration for repeated generations
+- Mode tracking (Text2Img vs Img2Img)
+- Settings persistence across sessions
 
 ====================================
 CUSTOMIZATION GUIDE
@@ -314,41 +417,112 @@ TO ADD NEW STYLES:
 1. Add new entry to stylePrompts object in styleManager.js
 2. Add corresponding HTML button in index.html
 3. Add preview image to images/ folder
+4. Update CSS for new style button
 
-TO MODIFY SETTINGS:
+TO MODIFY WORKFLOW SETTINGS:
 1. Update settingsManager.js for new controls
 2. Update HTML form elements
-3. Update apiClient.js to handle new parameters
+3. Update apiClient.js to handle new parameters in getWorkflowWithSettings()
+4. Test with both text2img and img2img workflows
 
-TO ADD NEW FEATURES:
-1. Create new module file following existing pattern
-2. Import and initialize in app.js
-3. Add necessary HTML elements
-4. Update documentation
+TO ADD NEW CONTROLNET FEATURES:
+1. Update img2img workflow JSON with new nodes
+2. Update apiClient.js workflow validation if needed
+3. Add corresponding UI controls if user-configurable
+4. Test memory usage with new features
 
-IMG2IMG FUNCTIONALITY:
-- Automatically detects when user uploads a photo
-- Switches from fastSDXLtext2img.json to fastSDXLimg2img.json workflow
-- Uploads photo to ComfyUI before generation
-- Uses depth preprocessing and ControlNet for guided generation
-- Gallery shows generation mode (Text2Img vs Img2Img) with image name
+TO OPTIMIZE FOR DIFFERENT HARDWARE:
+1. Adjust MAX_DIMENSION in photoUpload.js processImageForMobile()
+2. Modify TARGET_SHORT_SIDE in apiClient.js proportional calculation
+3. Update problematic node validation list based on available models
+4. Configure batch sizes in workflow JSON files
+
+WORKFLOW MODIFICATION:
+- Text2img: fastSDXLtext2img.json - Standard generation pipeline
+- Img2img: fastSDXLimg2img.json - Enhanced with ControlNet, depth, pose detection
+- Node IDs are consistent: 3=KSampler, 65=LoadImage, 94=ImageResize, etc.
+- Automatic workflow selection based on photo upload status
 
 ====================================
 MAINTENANCE NOTES
 ====================================
 
-- All modules use ES6 classes for consistency
-- Error handling should be added to console.log/warn/error
-- Event listeners are cleaned up in module destructors
-- Memory leaks are prevented by proper URL.revokeObjectURL calls
+- All modules use ES6 classes and async/await for consistency
+- Error handling includes both console logging and user notifications
+- Event listeners are properly cleaned up to prevent memory leaks
+- URL.revokeObjectURL calls prevent memory accumulation
 - WebSocket reconnection prevents permanent disconnections
+- Image processing is done client-side to reduce server load
+- Workflow validation prevents crashes from incompatible nodes
+
+====================================
+PERFORMANCE OPTIMIZATIONS
+====================================
+
+CLIENT-SIDE PROCESSING:
+- Image resizing before upload reduces network load
+- EXIF removal prevents server-side orientation issues
+- Aggressive compression reduces file sizes
+- Dimension calculation offloads server computation
+
+MEMORY MANAGEMENT:
+- Automatic image resizing prevents OOM errors
+- Workflow validation blocks memory-intensive nodes
+- Mobile-specific processing limits
+- Background cleanup of temporary objects
+
+NETWORK EFFICIENCY:
+- Workflow caching reduces repeated downloads
+- WebSocket for real-time updates instead of polling
+- Compressed image uploads
+- Efficient prompt filtering
 
 ====================================
 SECURITY CONSIDERATIONS
 ====================================
 
-- Content filtering prevents inappropriate generations
-- File upload validation prevents malicious files
-- WebSocket origin validation should be implemented server-side
-- User input sanitization prevents XSS attacks
-- Rate limiting should be implemented server-side
+CONTENT FILTERING:
+- 35+ forbidden word patterns for NSFW, violence, illegal content
+- Hidden negative prompts for additional content control
+- Input sanitization prevents prompt injection
+- Real-time filtering before generation
+
+FILE SECURITY:
+- File type validation (JPG/PNG only)
+- Size limits (50MB max with warnings)
+- Client-side processing prevents malicious uploads
+- No server-side file execution
+
+NETWORK SECURITY:
+- WebSocket origin validation (should be implemented server-side)
+- Rate limiting (should be implemented server-side)
+- Input sanitization prevents XSS attacks
+- Secure communication protocols
+
+====================================
+TROUBLESHOOTING GUIDE
+====================================
+
+OUT OF MEMORY ERRORS:
+1. Check workflow validation - ensure problematic nodes are blocked
+2. Verify image resizing - should be max 512px client-side
+3. Reduce batch sizes in workflow JSON
+4. Consider simplifying workflow for mobile devices
+
+CONNECTION ISSUES:
+1. Check WebSocket connection status
+2. Verify ComfyUI server is running
+3. Check network connectivity
+4. Review retry logic in websocketHandler
+
+IMAGE PROCESSING PROBLEMS:
+1. Verify file type validation
+2. Check canvas processing for EXIF issues
+3. Ensure proportional calculation is working
+4. Review mobile optimization settings
+
+GENERATION FAILURES:
+1. Check prompt filtering logs
+2. Verify workflow node validation
+3. Review dimension calculations
+4. Check ComfyUI model availability

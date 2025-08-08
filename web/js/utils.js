@@ -18,7 +18,7 @@ export class DOMUtils {
     return outMin + (outMax - outMin) * normalized;
   }
 
-  static createImageElement(src, isMainImage = false) {
+  static createImageElement(src, isMainImage = false, showActionsImmediately = false) {
     const container = document.createElement("div");
     container.className = "image-wrapper";
 
@@ -26,9 +26,59 @@ export class DOMUtils {
     img.src = src;
     img.className = "generated-image";
     img.alt = "Generated image";
+    
+    let hasRetried = false;
+    
+    // Add detailed logging and error handling
+    img.onload = () => {
+      console.log("✅ Image loaded successfully:", src);
+      img.style.display = "block"; // Show image when it loads successfully
+      
+      // Show actions only if explicitly allowed or this is not the main image
+      if (showActionsImmediately || !isMainImage) {
+        const actions = container.querySelector(".image-actions");
+        if (actions) {
+          actions.style.display = "flex";
+        }
+      }
+    };
+    
+    img.onerror = (error) => {
+      console.error("❌ Failed to load image:", {
+        src: src,
+        error: error,
+        naturalWidth: img.naturalWidth,
+        naturalHeight: img.naturalHeight,
+        complete: img.complete,
+        hasRetried: hasRetried
+      });
+      
+      // Immediately hide the broken image icon
+      img.style.display = "none";
+      
+      if (!hasRetried) {
+        hasRetried = true;
+        // Try to reload the image once with a delay
+        setTimeout(() => {
+          console.log("🔄 Retrying image load:", src);
+          const retryUrl = src.includes('?') ? src.replace(/\?.*$/, '') : src;
+          img.src = `${retryUrl}?retry=${Date.now()}`;
+        }, 3000); // Longer delay for img2img files to be written
+      } else {
+        console.error("❌ Image failed permanently after retry:", src);
+        // Mark as failed by keeping display none and adding retry in src
+      }
+    };
+
+    // Start with image hidden until it loads successfully
+    img.style.display = "none";
 
     const actions = document.createElement("div");
     actions.className = "image-actions";
+    // Initially hide actions for main images until workflow is complete
+    if (isMainImage && !showActionsImmediately) {
+      actions.style.display = "none";
+    }
 
     const saveBtn = document.createElement("button");
     saveBtn.className = "download-btn";
@@ -58,6 +108,15 @@ export class DOMUtils {
     container.appendChild(actions);
 
     return container;
+  }
+
+  static showImageActions(container) {
+    // Show the save/download actions for an image
+    const actions = container.querySelector(".image-actions");
+    if (actions) {
+      actions.style.display = "flex";
+      console.log("🎯 Image actions shown - save button is now available");
+    }
   }
 
   static showToast() {

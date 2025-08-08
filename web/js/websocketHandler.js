@@ -41,6 +41,9 @@ export class WebSocketHandler {
         case "executed":
           this.handleExecuted(msg.data);
           break;
+        case "executing":
+          this.handleExecuting(msg.data);
+          break;
         default:
           console.log("Unknown WebSocket message type:", msg.type);
       }
@@ -52,12 +55,40 @@ export class WebSocketHandler {
   handleProgress(data) {
     if (this.imageGenerator && data.max !== undefined && data.value !== undefined) {
       this.imageGenerator.updateProgress(data.max, data.value);
+      
+      // Log progress for debugging, especially useful for img2img operations
+      const percentage = data.max > 0 ? Math.round((data.value / data.max) * 100) : 0;
+      if (percentage % 25 === 0 || data.value === data.max) {
+        console.log(`📊 ComfyUI Progress: ${data.value}/${data.max} (${percentage}%)`);
+      }
+    }
+  }
+
+  handleExecuting(data) {
+    console.log("⚙️ WebSocket executing data received:", data);
+    
+    // Update UI to show that a node is being executed (useful for img2img preprocessing)
+    if (this.imageGenerator && data.node) {
+      console.log(`🔄 Node ${data.node} is executing...`);
+      this.imageGenerator.updateNodeExecution(data.node);
+    } else {
+      console.log("⚙️ Node execution started but no node ID provided:", data);
     }
   }
 
   handleExecuted(data) {
+    console.log("🎯 WebSocket executed data received:", data);
+    
     if (data?.output?.images && this.imageGenerator) {
+      console.log("✅ Images found in executed data:", data.output.images);
       this.imageGenerator.handleImageGenerated(data.output.images);
+    } else {
+      console.warn("⚠️ No images found in executed data:", {
+        hasData: !!data,
+        hasOutput: !!data?.output,
+        hasImages: !!data?.output?.images,
+        imageGeneratorExists: !!this.imageGenerator
+      });
     }
   }
 

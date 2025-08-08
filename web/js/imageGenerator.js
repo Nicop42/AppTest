@@ -10,6 +10,19 @@ export class ImageGenerator {
     this.generationCount = 0;
     this.generationHistory = []; // Store complete generation parameters for reuse
     
+    // Progress tracking for img2img workflow
+    this.workflowProgress = {
+      isImg2Img: false,
+      currentStage: 'idle',
+      executedNodes: new Set(),
+      totalExpectedNodes: 0,
+      stages: {
+        'preprocessing': { weight: 0.3, completed: false },
+        'sampling': { weight: 0.6, completed: false },
+        'postprocessing': { weight: 0.1, completed: false }
+      }
+    };
+    
     // DOM elements
     this.contImage = DOMUtils.$("#created-img-container");
     this.positiveInput = DOMUtils.$("#positive");
@@ -21,6 +34,7 @@ export class ImageGenerator {
     this.gallery = DOMUtils.$("#gallery-images");
 
     this.sessionFolder = `gradio/session_${this.apiClient.clientId.slice(0, 8)}`;
+    this.uploadedImageDimensions = null; // Store dimensions for proportional resizing
     
     this.setupEventListeners();
     console.log("🎯 ImageGenerator initialized");
@@ -60,6 +74,12 @@ export class ImageGenerator {
       if (useImg2Img) {
         console.log("🖼️ Using img2img mode - uploading image...");
         
+        // Update loading text to show upload progress
+        const loadingText = this.results.querySelector("#loading-text");
+        if (loadingText) {
+          loadingText.textContent = "Uploading image for processing...";
+        }
+        
         const selectedFile = this.photoUpload.getSelectedFile();
         if (!selectedFile) {
           throw new Error("Nessun file selezionato per img2img");
@@ -80,6 +100,12 @@ export class ImageGenerator {
           this.photoUpload.setUploadedImageName(uploadedImageName);
           
           console.log(`✅ Image uploaded successfully: ${uploadedImageName}`);
+          
+          // Update loading text to show processing phase
+          if (loadingText) {
+            loadingText.textContent = "Processing uploaded image...";
+          }
+          
         } catch (uploadError) {
           console.error("❌ Image upload failed:", uploadError);
           throw new Error(`Errore caricamento immagine: ${uploadError.message}`);
@@ -101,10 +127,16 @@ export class ImageGenerator {
       // Get workflow with settings (text2img or img2img)
       let workflow;
       try {
-        workflow = await this.apiClient.getWorkflowWithSettings(settings, useImg2Img, uploadedImageName);
+        workflow = await this.apiClient.getWorkflowWithSettings(
+          settings, 
+          useImg2Img, 
+          uploadedImageName,
+          this.uploadedImageDimensions
+        );
         console.log("📋 Workflow loaded successfully", {
           type: useImg2Img ? 'img2img' : 'text2img',
-          nodeCount: Object.keys(workflow).length
+          nodeCount: Object.keys(workflow).length,
+          hasImageDimensions: !!this.uploadedImageDimensions
         });
       } catch (workflowError) {
         console.error("❌ Workflow loading failed:", workflowError);
@@ -152,8 +184,9 @@ export class ImageGenerator {
         timestamp: Date.now()
       };
 
-      // Show loading state
+      // Show loading state and initialize progress tracking
       this.showLoadingState();
+      this.resetWorkflowProgress(useImg2Img);
       
       // Add to queue and generate
       this.promptQueue.push({ 
@@ -163,6 +196,12 @@ export class ImageGenerator {
         imageName: uploadedImageName,
         generationParams: generationParams  // Include full generation parameters
       });
+
+      // Update loading text to show generation phase
+      const loadingText = this.results.querySelector("#loading-text");
+      if (loadingText) {
+        loadingText.textContent = useImg2Img ? "Initializing image processing..." : "Generating image...";
+      }
 
       console.log("📤 Sending generation request...");
       
@@ -190,7 +229,7 @@ export class ImageGenerator {
     
     const loading = document.createElement("p");
     loading.id = "loading-text";
-    loading.textContent = "Processing image...";
+    loading.textContent = "Preparing generation...";
 
     const existingText = this.results.querySelector("#loading-text");
     if (existingText) existingText.remove();
@@ -201,6 +240,16 @@ export class ImageGenerator {
 
   handleImageGenerated(images) {
     console.log("🖼️ Handling generated images:", images.length);
+    
+    // Get current generation info before shifting the queue
+    const currentGeneration = this.promptQueue.length > 0 ? this.promptQueue[0] : { pos: "", neg: "", mode: "text2img", imageName: null, generationParams: null };
+    
+    // Mark workflow as completed
+    if (this.workflowProgress.isImg2Img) {
+      this.workflowProgress.stages.postprocessing.completed = true;
+      this.workflowProgress.currentStage = 'completed';
+      console.log("🎯 Img2Img workflow completed!");
+    }
     
     // Move previous image to gallery if exists
     const existingImage = this.results.querySelector(".image-container");
@@ -259,38 +308,271 @@ export class ImageGenerator {
       DOMUtils.showToast();
     }
 
-    // Remove loading text
+    // Remove loading text and update final progress
     const loadingText = this.results.querySelector("#loading-text");
     if (loadingText) loadingText.remove();
 
-    // Hide progress bar
-    this.progressbar.style.display = "none";
+    // Set progress to 100% and then hide after a short delay
+    DOMUtils.updateProgress(this.progressbar, 100, 100);
+    setTimeout(() => {
+      this.progressbar.style.display = "none";
+    }, 1000);
 
-    // Show new generated images
-    this.displayNewImages(images);
+    // Show new generated images and track when they're loaded
+    this.displayNewImages(images, currentGeneration.mode);
     
     console.log("✅ Image generation completed successfully");
   }
 
-  displayNewImages(images) {
+  displayNewImages(images, generationMode = 'text2img') {
     console.log("🎨 Displaying new images:", images.length);
+    console.log("🔍 Image data received:", images);
+    console.log("🎯 Generation mode:", generationMode);
     
     this.results.innerHTML = "";
     const imageContainer = document.createElement("div");
     imageContainer.className = "image-container";
 
+    // Create all image elements first
+    const imageElements = [];
     for (const img of images) {
+      console.log("🖼️ Processing image:", {
+        filename: img.filename,
+        subfolder: img.subfolder,
+        type: img.type
+      });
+      
       const url = `/output/${img.subfolder}/${img.filename}?rand=${Math.random()}`;
       console.log("🔗 Creating image element for:", url);
+      
+      // Validate URL components
+      if (!img.filename) {
+        console.error("❌ Missing filename in image data:", img);
+        continue;
+      }
+      
       const imageElement = DOMUtils.createImageElement(url, true);
       imageContainer.appendChild(imageElement);
+      imageElements.push(imageElement);
     }
 
     this.results.appendChild(imageContainer);
+    
+    // Monitor image loading with polling, passing the generation mode
+    this.monitorImageLoading(imageElements, generationMode);
+  }
+
+  monitorImageLoading(imageElements, generationMode = 'text2img') {
+    const totalImages = imageElements.length;
+    let checkCount = 0;
+    
+    // Use the passed generation mode instead of trying to detect from queue
+    const isImg2ImgMode = generationMode === 'img2img';
+    
+    // Reasonable timeout for both modes
+    const maxChecks = isImg2ImgMode ? 60 : 30; // img2img: 30 seconds, text2img: 15 seconds
+    const checkInterval = 500; // Check every 500ms
+    
+    console.log(`📊 Starting to monitor ${totalImages} images (${generationMode} mode)`);
+    console.log(`⏱️ Maximum monitoring time: ${(maxChecks * checkInterval / 1000)} seconds`);
+    
+    const checkImagesLoaded = () => {
+      checkCount++;
+      let loadedCount = 0;
+      let failedCount = 0;
+      
+      imageElements.forEach((container, index) => {
+        const img = container.querySelector('.generated-image');
+        if (img) {
+          if (img.style.display === 'block') {
+            loadedCount++;
+          } else if (img.style.display === 'none' && img.src.includes('retry=')) {
+            failedCount++;
+          }
+        }
+      });
+      
+      const totalProcessed = loadedCount + failedCount;
+      const elapsedTime = (checkCount * checkInterval / 1000).toFixed(1);
+      console.log(`📊 Check ${checkCount} (${elapsedTime}s): ${loadedCount} loaded, ${failedCount} failed, ${totalProcessed}/${totalImages} total`);
+      
+      // Minimum display time to ensure users see the progress bar
+      const minDisplayTime = isImg2ImgMode ? 3000 : 1000; // img2img: 3 seconds minimum, text2img: 1 second
+      const elapsedTimeMs = checkCount * checkInterval;
+      
+      // Hide progress bar when:
+      // 1. All images are processed (loaded or failed) AND minimum time has elapsed
+      // 2. OR maximum timeout reached
+      if ((totalProcessed >= totalImages && elapsedTimeMs >= minDisplayTime) || checkCount >= maxChecks) {
+        const reason = checkCount >= maxChecks ? "timeout reached" : "all images processed";
+        console.log(`✅ ${reason} after ${elapsedTime}s, hiding progress bar`);
+        this.progressbar.style.display = "none";
+        
+        // Show save buttons for loaded images
+        this.showSaveButtonsForImages();
+        return;
+      }
+      
+      // Show additional info for img2img mode
+      if (isImg2ImgMode && checkCount % 10 === 0) {
+        console.log(`🖼️ Img2img processing continues... (${elapsedTime}s elapsed)`);
+      }
+      
+      // Continue checking
+      setTimeout(checkImagesLoaded, checkInterval);
+    };
+    
+    // Start monitoring after a short delay
+    setTimeout(checkImagesLoaded, 1000);
+  }
+
+  showSaveButtonsForImages() {
+    console.log("🎯 Showing save buttons for all loaded images");
+    
+    // Show save buttons for current main images
+    const imageContainers = this.results.querySelectorAll(".image-wrapper");
+    imageContainers.forEach(container => {
+      const img = container.querySelector('.generated-image');
+      // Only show actions for successfully loaded images
+      if (img && img.style.display === 'block') {
+        DOMUtils.showImageActions(container);
+      }
+    });
   }
 
   updateProgress(max, value) {
-    DOMUtils.updateProgress(this.progressbar, max, value);
+    // If this is actual sampling progress, update the progress bar
+    if (max > 0 && value !== undefined) {
+      DOMUtils.updateProgress(this.progressbar, max, value);
+      
+      // Calculate sampling progress
+      const samplingProgress = Math.round((value / max) * 100);
+      
+      // If we're in img2img mode, factor in the overall workflow progress
+      if (this.workflowProgress.isImg2Img) {
+        this.workflowProgress.stages.sampling.completed = (value === max);
+        const overallProgress = this.calculateOverallProgress(samplingProgress);
+        this.updateProgressText(`Generating image... ${overallProgress}%`);
+      } else {
+        this.updateProgressText(`Generating image... ${samplingProgress}%`);
+      }
+      
+      // Log progress for debugging
+      if (samplingProgress % 25 === 0 || value === max) {
+        console.log(`📊 Sampling Progress: ${value}/${max} (${samplingProgress}%)`);
+      }
+    }
+  }
+
+  updateNodeExecution(nodeId) {
+    console.log(`⚙️ Node executing: ${nodeId}`);
+    
+    if (!this.workflowProgress.isImg2Img) return;
+    
+    this.workflowProgress.executedNodes.add(nodeId);
+    
+    // Define node patterns and their stages (using more flexible matching)
+    const nodeStagePatterns = [
+      { patterns: ['LoadImage', '65'], stage: 'preprocessing', description: 'Loading image' },
+      { patterns: ['MiDaS', 'DepthMapPreprocessor', '94'], stage: 'preprocessing', description: 'Processing depth map' },
+      { patterns: ['VAEEncode', '69'], stage: 'preprocessing', description: 'Encoding image' },
+      { patterns: ['ControlNet', '61', '63'], stage: 'preprocessing', description: 'Applying ControlNet' },
+      { patterns: ['KSampler', '3'], stage: 'sampling', description: 'Generating image' },
+      { patterns: ['VAEDecode', '8'], stage: 'postprocessing', description: 'Decoding image' },
+      { patterns: ['SaveImage', '28'], stage: 'postprocessing', description: 'Saving image' }
+    ];
+    
+    // Find matching stage
+    let matchedStage = null;
+    let stageDescription = 'Processing';
+    
+    for (const { patterns, stage, description } of nodeStagePatterns) {
+      if (patterns.some(pattern => nodeId.toString().includes(pattern))) {
+        matchedStage = stage;
+        stageDescription = description;
+        break;
+      }
+    }
+    
+    // Update current stage if we found a match
+    if (matchedStage) {
+      const previousStage = this.workflowProgress.currentStage;
+      this.workflowProgress.currentStage = matchedStage;
+      
+      console.log(`🎯 Stage transition: ${previousStage} → ${matchedStage} (${stageDescription})`);
+      
+      // Update progress text and bar based on current stage
+      switch (matchedStage) {
+        case 'preprocessing':
+          this.updateProgressText(`${stageDescription}...`);
+          // Show some progress during preprocessing (gradually increasing)
+          const preprocessProgress = Math.min(25, Math.max(5, this.workflowProgress.executedNodes.size * 3));
+          DOMUtils.updateProgress(this.progressbar, 100, preprocessProgress);
+          break;
+        case 'sampling':
+          this.updateProgressText('Generating image from photo...');
+          // Sampling progress will be handled by updateProgress method
+          break;
+        case 'postprocessing':
+          this.updateProgressText('Finalizing image...');
+          DOMUtils.updateProgress(this.progressbar, 100, 95);
+          break;
+      }
+    } else {
+      console.log(`🔍 Unknown node type: ${nodeId} - keeping current stage: ${this.workflowProgress.currentStage}`);
+    }
+  }
+
+  isNodeType(nodeId, nodeType) {
+    // Helper method to identify node types by checking the workflow
+    // This is a simplified approach - in a real implementation, you'd 
+    // want to track the actual node types from the workflow
+    const currentGeneration = this.promptQueue.length > 0 ? this.promptQueue[0] : null;
+    return false; // Simplified for now
+  }
+
+  calculateOverallProgress(samplingProgress) {
+    const stages = this.workflowProgress.stages;
+    let totalProgress = 0;
+    
+    // Add completed stages
+    if (stages.preprocessing.completed) totalProgress += stages.preprocessing.weight * 100;
+    else if (this.workflowProgress.currentStage === 'preprocessing') totalProgress += Math.min(stages.preprocessing.weight * 100, 20);
+    
+    // Add current sampling progress
+    if (this.workflowProgress.currentStage === 'sampling') {
+      totalProgress += (samplingProgress / 100) * stages.sampling.weight * 100;
+    } else if (stages.sampling.completed) {
+      totalProgress += stages.sampling.weight * 100;
+    }
+    
+    // Add postprocessing if completed
+    if (stages.postprocessing.completed) totalProgress += stages.postprocessing.weight * 100;
+    else if (this.workflowProgress.currentStage === 'postprocessing') totalProgress += stages.postprocessing.weight * 50;
+    
+    return Math.round(Math.min(totalProgress, 99)); // Never show 100% until truly complete
+  }
+
+  updateProgressText(text) {
+    const loadingText = this.results.querySelector("#loading-text");
+    if (loadingText) {
+      loadingText.textContent = text;
+    }
+  }
+
+  resetWorkflowProgress(isImg2Img = false) {
+    this.workflowProgress = {
+      isImg2Img: isImg2Img,
+      currentStage: 'idle',
+      executedNodes: new Set(),
+      totalExpectedNodes: 0,
+      stages: {
+        'preprocessing': { weight: 0.3, completed: false },
+        'sampling': { weight: 0.6, completed: false },
+        'postprocessing': { weight: 0.1, completed: false }
+      }
+    };
+    console.log(`🔄 Workflow progress reset for ${isImg2Img ? 'img2img' : 'text2img'} mode`);
   }
 
   // Restore generation parameters to the UI
@@ -334,5 +616,10 @@ export class ImageGenerator {
     }
     
     console.log("✅ Generation parameters restored successfully");
+  }
+
+  setUploadedImageDimensions(dimensions) {
+    this.uploadedImageDimensions = dimensions;
+    console.log("📐 Stored uploaded image dimensions:", dimensions);
   }
 }

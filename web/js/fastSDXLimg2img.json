@@ -1,94 +1,322 @@
 {
   "3": {
     "inputs": {
-      "seed": 123456,
+      "seed": 962778267349187,
       "steps": 10,
       "cfg": 1.5,
-      "sampler_name": "dpmpp_2m_sde",
+      "sampler_name": "euler",
       "scheduler": "exponential",
-      "denoise": 0.75,
-      "model": ["4", 0],
-      "positive": ["30", 0],
-      "negative": ["33", 0],
-      "latent_image": ["69", 0]
+      "denoise": 1,
+      "model": [
+        "63",
+        0
+      ],
+      "positive": [
+        "73",
+        0
+      ],
+      "negative": [
+        "73",
+        1
+      ],
+      "latent_image": [
+        "69",
+        0
+      ]
     },
-    "class_type": "KSampler"
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
   },
   "4": {
     "inputs": {
       "ckpt_name": "dreamshaperXL_v21TurboDPMSDE.safetensors"
     },
-    "class_type": "CheckpointLoaderSimple"
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Load Checkpoint"
+    }
   },
   "8": {
     "inputs": {
-      "samples": ["3", 0],
-      "vae": ["39", 0]
+      "samples": [
+        "3",
+        0
+      ],
+      "vae": [
+        "39",
+        0
+      ]
     },
-    "class_type": "VAEDecode"
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
   },
   "28": {
     "inputs": {
-      "filename_prefix": "gradio/test",
-      "images": ["8", 0]
+      "filename_prefix": "gradio/2025-08-07-8-57-3 img",
+      "images": [
+        "8",
+        0
+      ]
     },
-    "class_type": "SaveImage"
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
   },
   "30": {
     "inputs": {
-      "width": 1024,
-      "height": 1024,
+      "width": 4096,
+      "height": 4096,
       "crop_w": 0,
       "crop_h": 0,
-      "target_width": 1024,
-      "target_height": 1024,
-      "text_g": "a beautiful landscape",
-      "text_l": "a beautiful landscape",
-      "clip": ["4", 1]
+      "target_width": 4096,
+      "target_height": 4096,
+      "text_g": "english lord",
+      "text_l": "english lord",
+      "clip": [
+        "63",
+        1
+      ]
     },
-    "class_type": "CLIPTextEncodeSDXL"
+    "class_type": "CLIPTextEncodeSDXL",
+    "_meta": {
+      "title": "CLIPTextEncodeSDXL"
+    }
   },
   "33": {
     "inputs": {
-      "width": 1024,
-      "height": 1024,
+      "width": 4096,
+      "height": 4096,
       "crop_w": 0,
       "crop_h": 0,
-      "target_width": 1024,
-      "target_height": 1024,
-      "text_g": "blurry, low quality",
-      "text_l": "blurry, low quality",
-      "clip": ["4", 1]
+      "target_width": 4096,
+      "target_height": 4096,
+      "text_g": "blurry",
+      "text_l": "blurry",
+      "clip": [
+        "63",
+        1
+      ]
     },
-    "class_type": "CLIPTextEncodeSDXL"
+    "class_type": "CLIPTextEncodeSDXL",
+    "_meta": {
+      "title": "CLIPTextEncodeSDXL"
+    }
   },
+
   "39": {
     "inputs": {
       "vae_name": "sdxl_vae.safetensors"
     },
-    "class_type": "VAELoader"
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "40": {
+    "inputs": {
+      "model_name": "GFPGANv1.4.pth"
+    },
+    "class_type": "FaceRestoreModelLoader",
+    "_meta": {
+      "title": "FaceRestoreModelLoader"
+    }
+  },
+  "41": {
+    "inputs": {
+      "facedetection": "YOLOv5l",
+      "codeformer_fidelity": 0.75,
+      "facerestore_model": [
+        "40",
+        0
+      ],
+      "image": [
+        "8",
+        0
+      ]
+    },
+    "class_type": "FaceRestoreCFWithModel",
+    "_meta": {
+      "title": "FaceRestoreCFWithModel (Output)"
+    }
+  },
+  "59": {
+    "inputs": {
+      "control_net_name": "diffusion_pytorch_model_promax.safetensors"
+    },
+    "class_type": "ControlNetLoader",
+    "_meta": {
+      "title": "Load ControlNet Model"
+    }
+  },
+  "63": {
+    "inputs": {
+      "lora_name": "MJ52_v2.0.safetensors",
+      "strength_model": 1.0000000000000002,
+      "strength_clip": 1.0000000000000002,
+      "model": [
+        "4",
+        0
+      ],
+      "clip": [
+        "4",
+        1
+      ]
+    },
+    "class_type": "LoraLoader",
+    "_meta": {
+      "title": "Load LoRA"
+    }
+  },
+  "64": {
+    "inputs": {
+      "strength": 0.65,
+      "start_percent": 0,
+      "end_percent": 1,
+      "positive": [
+        "30",
+        0
+      ],
+      "negative": [
+        "33",
+        0
+      ],
+      "control_net": [
+        "59",
+        0
+      ],
+      "image": [
+        "96",
+        0
+      ]
+    },
+    "class_type": "ControlNetApplyAdvanced",
+    "_meta": {
+      "title": "Apply ControlNet"
+    }
   },
   "65": {
     "inputs": {
-      "image": "test.jpg"
+      "image": "baa77ce8-b8d2-42df-b526-e6b424b4d81a.jpg"
     },
-    "class_type": "LoadImage"
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image"
+    }
   },
   "69": {
     "inputs": {
-      "pixels": ["76", 0],
-      "vae": ["39", 0]
+      "pixels": [
+        "94",
+        0
+      ],
+      "vae": [
+        "39",
+        0
+      ]
     },
-    "class_type": "VAEEncode"
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAE Encode"
+    }
   },
-  "76": {
+  "73": {
     "inputs": {
-      "upscale_method": "nearest-exact",
-      "width": 1024,
-      "height": 1024,
-      "crop": "disabled",
-      "image": ["65", 0]
+      "strength": 0.65,
+      "start_percent": 0,
+      "end_percent": 1,
+      "positive": [
+        "64",
+        0
+      ],
+      "negative": [
+        "64",
+        1
+      ],
+      "control_net": [
+        "59",
+        0
+      ],
+      "image": [
+        "85",
+        0
+      ],
+      "vae": [
+        "39",
+        0
+      ]
     },
-    "class_type": "ImageScale"
+    "class_type": "ControlNetApplyAdvanced",
+    "_meta": {
+      "title": "Apply ControlNet"
+    }
+  },
+  "79": {
+    "inputs": {
+      "images": [
+        "96",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Preview Image"
+    }
+  },
+  "85": {
+    "inputs": {
+      "detect_hand": "enable",
+      "detect_body": "enable",
+      "detect_face": "enable",
+      "resolution": 512,
+      "bbox_detector": "yolox_l.onnx",
+      "pose_estimator": "dw-ll_ucoco_384_bs5.torchscript.pt",
+      "scale_stick_for_xinsr_cn": "disable",
+      "image": [
+        "94",
+        0
+      ]
+    },
+    "class_type": "DWPreprocessor",
+    "_meta": {
+      "title": "DWPose Estimator"
+    }
+  },
+  "94": {
+    "inputs": {
+      "mode": "resize",
+      "supersample": "true",
+      "resampling": "lanczos",
+      "rescale_factor": 2,
+      "resize_width": 1024,
+      "resize_height": 1024,
+      "image": [
+        "65",
+        0
+      ]
+    },
+    "class_type": "Image Resize",
+    "_meta": {
+      "title": "Image Resize"
+    }
+  },
+  "96": {
+    "inputs": {
+      "a": 6.283185307179586,
+      "bg_threshold": 0.1,
+      "resolution": 1024,
+      "image": [
+        "94",
+        0
+      ]
+    },
+    "class_type": "MiDaS-DepthMapPreprocessor",
+    "_meta": {
+      "title": "MiDaS Depth Map"
+    }
   }
 }

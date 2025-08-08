@@ -3,6 +3,18 @@
 // Just edit the values below and the UI will automatically update.
 
 /**
+ * DISPLAY CONFIGURATION
+ * Define which styles appear in the main section vs "more styles" section
+ */
+export const DISPLAY_CONFIG = {
+  // Styles that appear in the main visible section (first 8 styles)
+  primaryStyles: ['style1', 'style2', 'style3', 'style4', 'style5', 'style6', 'style7', 'style12'],
+  
+  // Styles that appear in the "more styles" hidden section
+  moreStyles: ['style8', 'style9', 'style10', 'style11']
+};
+
+/**
  * Style Configuration Object
  * 
  * HOW TO USE:
@@ -21,16 +33,16 @@
 export const STYLE_CONFIG = {
   style1: {
     image: "gatto1.png",
-    name: "Renaissance",
-    positivePrompt: "renaissance painting, highly detailed, vibrant colors, 4k, trending on artstation",
-    negativePrompt: "modern, digital, pixelated"
+    name: "Renaissance Art",
+    positivePrompt: "renaissance painting, highly detailed, vibrant colors, 4k, trending on artstation, masterpiece",
+    negativePrompt: "modern, digital, pixelated, low quality"
   },
   
   style2: {
     image: "gatto2.png", 
-    name: "Sketch",
-    positivePrompt: "pencil sketch, detailed linework, monochrome, hatching, cross-hatching",
-    negativePrompt: "colorful, painted, digital"
+    name: "Pencil Sketch",
+    positivePrompt: "pencil sketch, detailed linework, monochrome, hatching, cross-hatching, artistic drawing",
+    negativePrompt: "colorful, painted, digital, photorealistic"
   },
   
   style3: {
@@ -84,7 +96,7 @@ export const STYLE_CONFIG = {
   
   style10: {
     image: "gatto10.png",
-    name: "Pop Art", 
+    name: "PopArt", 
     positivePrompt: "pop art, bold colors, comic book style, cultural references",
     negativePrompt: "muted colors, realistic, classical"
   },
@@ -98,7 +110,7 @@ export const STYLE_CONFIG = {
   
   style12: {
     image: "gatto12.png", 
-    name: "Surrealism",
+    name: "Surreal",
     positivePrompt: "surreal painting, dreamlike scenes, bizarre imagery, vibrant colors, dali style",
     negativePrompt: "smooth, digital, realistic, sharp edges"
   }

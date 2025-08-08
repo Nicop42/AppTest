@@ -111,13 +111,19 @@ export class PhotoUpload {
       return;
     }
 
-    // Check file size (optional - add reasonable limit)
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    // Check file size (increased limit but add warning for very large files)
+    const maxSize = 50 * 1024 * 1024; // 50MB max
+    const warningSize = 10 * 1024 * 1024; // 10MB warning threshold
+    
     if (file.size > maxSize) {
-      const message = "Il file è troppo grande. Massimo 10MB.";
+      const message = "Il file è troppo grande. Massimo 50MB.";
       console.error("❌ File too large:", file.size);
       alert(message);
       return;
+    }
+    
+    if (file.size > warningSize) {
+      console.warn(`⚠️ Large file detected: ${(file.size / 1024 / 1024).toFixed(2)}MB - will be resized for processing`);
     }
 
     try {
@@ -127,11 +133,22 @@ export class PhotoUpload {
         URL.revokeObjectURL(this.uploadedImageURL);
       }
 
-      // Create new URL and update preview
+      // Create new URL and update preview with orientation correction
       this.uploadedImageURL = URL.createObjectURL(file);
       console.log("🖼️ Created new image URL:", this.uploadedImageURL);
       
       if (this.previewArea) {
+        // Check if this is a mobile photo that might need orientation correction
+        const img = new Image();
+        img.onload = () => {
+          console.log(`📐 Image dimensions: ${img.width}x${img.height}`);
+          // Check if image is very tall (potential mobile portrait with wrong orientation)
+          if (img.height > img.width * 2) {
+            console.log("⚠️ Detected potential mobile portrait image");
+          }
+        };
+        img.src = this.uploadedImageURL;
+        
         this.previewArea.innerHTML = `<img src="${this.uploadedImageURL}" alt="Preview" style="max-width: 100%; max-height: 300px; object-fit: contain;">`;
         console.log("✅ Preview updated successfully");
       } else {
@@ -191,6 +208,96 @@ export class PhotoUpload {
     }
   }
 
+  async processImageForMobile(file) {
+    return new Promise((resolve, reject) => {
+      console.log("🔧 Processing image for mobile compatibility");
+      
+      const img = new Image();
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      img.onload = () => {
+        try {
+          const originalWidth = img.width;
+          const originalHeight = img.height;
+          console.log(`📐 Original image: ${originalWidth}x${originalHeight}`);
+          
+          // Much more aggressive sizing for Marigold compatibility
+          // Marigold works better with smaller, specific resolutions
+          const MAX_DIMENSION = 512; // Further reduced for Marigold
+          let { width, height } = img;
+          
+          // Always resize to a smaller, memory-friendly size
+          const aspectRatio = width / height;
+          
+          // Force to common AI-friendly resolutions
+          if (aspectRatio > 1) {
+            // Landscape
+            width = MAX_DIMENSION;
+            height = Math.round(MAX_DIMENSION / aspectRatio);
+          } else {
+            // Portrait or square
+            height = MAX_DIMENSION;
+            width = Math.round(MAX_DIMENSION * aspectRatio);
+          }
+          
+          // Ensure dimensions are multiples of 8 (important for AI models)
+          width = Math.round(width / 8) * 8;
+          height = Math.round(height / 8) * 8;
+          
+          console.log(`📉 Resizing to: ${width}x${height} (from ${img.width}x${img.height})`);
+          console.log(`🔢 Memory reduction factor: ${((img.width * img.height) / (width * height)).toFixed(2)}x`);
+          
+          // Set canvas size to calculated dimensions
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Clear canvas and set white background (helps with some models)
+          ctx.fillStyle = 'white';
+          ctx.fillRect(0, 0, width, height);
+          
+          // Draw image to canvas with scaling and orientation correction
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Convert back to blob with aggressive compression
+          canvas.toBlob((blob) => {
+            if (blob) {
+              // Create a new File object with the processed data
+              const processedFile = new File([blob], file.name, {
+                type: 'image/jpeg', // Force JPEG for better compatibility
+                lastModified: Date.now()
+              });
+              
+              console.log(`✅ Image processed: ${processedFile.size} bytes (${(processedFile.size / 1024 / 1024).toFixed(2)}MB)`);
+              console.log(`📊 Size reduction: ${((file.size - processedFile.size) / file.size * 100).toFixed(1)}%`);
+              console.log(`🎯 Final dimensions: ${width}x${height}`);
+              
+              // Return both the processed file and original dimensions for proportional resizing
+              resolve({ 
+                file: processedFile, 
+                originalDimensions: { width: originalWidth, height: originalHeight },
+                processedDimensions: { width, height }
+              });
+            } else {
+              reject(new Error('Failed to process image'));
+            }
+          }, 'image/jpeg', 0.75); // More aggressive compression (75% quality)
+          
+        } catch (error) {
+          console.error("❌ Error processing image:", error);
+          reject(error);
+        }
+      };
+      
+      img.onerror = () => {
+        console.error("❌ Error loading image for processing");
+        reject(new Error('Failed to load image'));
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
   async applyPhoto() {
     console.log("✅ Applying photo...");
     
@@ -207,13 +314,26 @@ export class PhotoUpload {
     }
 
     try {
-      console.log("📤 Calling photo applied callback with file:", this.selectedFile.name);
-      await this.onPhotoAppliedCallback(this.selectedFile);
+      // Process the image for mobile compatibility (removes EXIF orientation issues)
+      console.log("🔧 Processing image before upload...");
+      const result = await this.processImageForMobile(this.selectedFile);
+      
+      // Store dimensions for later use
+      this.originalImageDimensions = result.originalDimensions;
+      
+      console.log("📤 Calling photo applied callback with processed file:", result.file.name);
+      console.log("📐 Original dimensions stored:", this.originalImageDimensions);
+      
+      await this.onPhotoAppliedCallback(result.file, this.originalImageDimensions);
       console.log("✅ Photo applied successfully");
     } catch (error) {
       console.error("❌ Error applying photo:", error);
       alert(`Errore nell'applicazione della foto: ${error.message}`);
     }
+  }
+
+  getOriginalImageDimensions() {
+    return this.originalImageDimensions;
   }
 
   setOnPhotoAppliedCallback(callback) {

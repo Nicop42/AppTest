@@ -58,7 +58,7 @@ export class APIClient {
 
   // NEW: Validate workflow doesn't contain problematic nodes
   validateWorkflow(workflow, type) {
-    const problematicNodes = ['MarigoldDepthEstimation', 'DWPreprocessor', 'DepthAnything'];
+    const problematicNodes = ['DepthAnything'];
     
     for (const [nodeId, nodeData] of Object.entries(workflow)) {
       if (nodeData.class_type && problematicNodes.includes(nodeData.class_type)) {
@@ -106,7 +106,7 @@ export class APIClient {
     return text.replace(forbiddenPattern, "").replace(/\s+/g, " ").trim();
   }
 
-  async getWorkflowWithSettings(settings, useImg2Img = false, uploadedImageName = null) {
+  async getWorkflowWithSettings(settings, useImg2Img = false, uploadedImageName = null, imageDimensions = null) {
     const workflow = await this.loadWorkflow(useImg2Img);
 
     console.log(`⚙️ Applying settings to ${useImg2Img ? 'img2img' : 'text2img'} workflow...`);
@@ -145,6 +145,42 @@ export class APIClient {
         workflow["33"].inputs.height = settings.dimensions.height;
         workflow["33"].inputs.target_width = settings.dimensions.width;
         workflow["33"].inputs.target_height = settings.dimensions.height;
+      }
+      
+      // Calculate and set proportional resize dimensions for img2img
+      if (useImg2Img && imageDimensions && imageDimensions.width && imageDimensions.height) {
+        const { width: originalWidth, height: originalHeight } = imageDimensions;
+        console.log(`📐 Original image dimensions: ${originalWidth}x${originalHeight}`);
+        
+        // Calculate proportional dimensions where shortest side is 1024
+        const aspectRatio = originalWidth / originalHeight;
+        const TARGET_SHORT_SIDE = 1024;
+        let resizeWidth, resizeHeight;
+        
+        if (originalWidth < originalHeight) {
+          // Portrait: width is shorter
+          resizeWidth = TARGET_SHORT_SIDE;
+          resizeHeight = Math.round(TARGET_SHORT_SIDE / aspectRatio);
+        } else {
+          // Landscape or square: height is shorter
+          resizeHeight = TARGET_SHORT_SIDE;
+          resizeWidth = Math.round(TARGET_SHORT_SIDE * aspectRatio);
+        }
+        
+        // Ensure dimensions are multiples of 8 (AI model requirement)
+        resizeWidth = Math.round(resizeWidth / 8) * 8;
+        resizeHeight = Math.round(resizeHeight / 8) * 8;
+        
+        console.log(`🔧 Calculated proportional resize: ${resizeWidth}x${resizeHeight}`);
+        console.log(`📊 Aspect ratio maintained: ${(resizeWidth/resizeHeight).toFixed(3)} (original: ${aspectRatio.toFixed(3)})`);
+        
+        // Set proportional dimensions in the Image Resize node (94)
+        if (workflow["94"]) {
+          workflow["94"].inputs.resize_width = resizeWidth;
+          workflow["94"].inputs.resize_height = resizeHeight;
+          workflow["94"].inputs.mode = "resize"; // Ensure it's in resize mode
+          console.log(`📏 Set Image Resize node (94) to: ${resizeWidth}x${resizeHeight}`);
+        }
       }
       
       // Set dimensions in ImageScale node if it exists

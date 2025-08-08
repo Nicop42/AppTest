@@ -6,6 +6,10 @@ import { APIClient } from './apiClient.js';
 import { ImageGenerator } from './imageGenerator.js';
 import { PhotoUpload } from './photoUpload.js';
 import { WebSocketHandler } from './websocketHandler.js';
+import { STYLE_CONFIG, DISPLAY_CONFIG } from './styleConfig.js';
+
+console.log("🔍 DEBUG: STYLE_CONFIG imported directly in app.js:", STYLE_CONFIG);
+console.log("🔍 DEBUG: DISPLAY_CONFIG imported directly in app.js:", DISPLAY_CONFIG);
 
 class App {
   constructor() {
@@ -15,6 +19,13 @@ class App {
 
   async init() {
     try {
+      // Wait for DOM to be fully ready
+      if (document.readyState === 'loading') {
+        await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve));
+      }
+      
+      console.log("🚀 App initializing with DOM ready...");
+      
       // Initialize core modules
       this.apiClient = new APIClient(this.clientId);
       this.settingsManager = new SettingsManager();
@@ -25,8 +36,13 @@ class App {
       this.imageGenerator = new ImageGenerator(this.apiClient, this.settingsManager, this.photoUpload);
       
       // Set up photo upload callback to handle img2img mode
-      this.photoUpload.setOnPhotoAppliedCallback(async (file) => {
+      this.photoUpload.setOnPhotoAppliedCallback(async (file, imageDimensions) => {
         console.log("📷 Photo applied for img2img generation:", file.name);
+        if (imageDimensions) {
+          console.log("📐 Image dimensions received:", imageDimensions);
+          // Store dimensions for use in generation
+          this.imageGenerator.setUploadedImageDimensions(imageDimensions);
+        }
         // The photo is now ready for img2img generation
         // The actual img2img logic is handled in imageGenerator.handleGenerate()
       });

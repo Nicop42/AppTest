@@ -2,7 +2,7 @@
 
 ## What Was Fixed
 
-✅ **Image/Style Mismatch Issue**: Fixed the confusion where gatto11.png was showing Surrealism but mapped to Claymation, etc.
+✅ **Image/Style Mismatch Issue**: Fixed the confusion where stile11.png was showing Surrealism but mapped to Claymation, etc.
 
 ✅ **Centralized Configuration**: All style settings are now in one easy-to-edit file
 
@@ -38,18 +38,18 @@
 
 ### 📋 Current Style Mappings (Fixed):
 
-- **style1**: Renaissance (gatto1.png) 
-- **style2**: Sketch (gatto2.png)
-- **style3**: Impressionist (gatto3.png) 
-- **style4**: Cartoon (gatto4.jpg)
-- **style5**: Watercolor (gatto5.png)
-- **style6**: Cubism (gatto6.png)
-- **style7**: Abstract (gatto7.png)
-- **style8**: Art Nouveau (gatto8.png)
-- **style9**: Vector (gatto9.png)
-- **style10**: Pop Art (gatto10.png)
-- **style11**: Surrealism (gatto11.png) ← **FIXED!**
-- **style12**: Claymation (gatto12.png) ← **FIXED!**
+- **style1**: Renaissance (stile1.png) 
+- **style2**: Sketch (stile2.png)
+- **style3**: Impressionist (stile3.png) 
+- **style4**: Cartoon (stile4.jpg)
+- **style5**: Watercolor (stile5.png)
+- **style6**: Cubism (stile6.png)
+- **style7**: Abstract (stile7.png)
+- **style8**: Art Nouveau (stile8.png)
+- **style9**: Vector (stile9.png)
+- **style10**: Pop Art (stile10.png)
+- **style11**: Surrealism (stile11.png) ← **FIXED!**
+- **style12**: Claymation (stile12.png) ← **FIXED!**
 
 ## Key Benefits
 

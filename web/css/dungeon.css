@@ -565,6 +565,36 @@ button .material-symbols-outlined {
 #use-photo-section{
   margin-top: 40px;
 }
+.modal-title{
+  margin-top: 0;
+  
+}
+#usePhotoModal hr{
+  margin: 40px 0 38px;
+}
+#usePhotoModal  h3{
+  margin: 0px 0 15px;
+  font-size: 1.25rem;
+  text-align: left;
+}
+.swiper-archivio{
+  --swiper-theme-color: var(--highlight);
+  padding-bottom: 40px;
+}
+.swiper-archivio img{
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+.img-archivio-btn{
+  padding: 0 !important;
+  background: transparent;
+  flex-direction: column;
+  font-weight: normal;
+}
+.swiper-slide.active .img-archivio-btn img{
+  border: 3px solid var(--highlight);
+}
 .use-photo-text{
   display: flex;
   gap:10px;
@@ -590,7 +620,7 @@ button .material-symbols-outlined {
   gap:10px;
   align-items: center;
   justify-content: space-between;
-  margin: 0 auto;
+  /*margin: 0 auto;*/
 }
 .use-photo-btnWarp button{
   line-height: 1;
@@ -602,7 +632,7 @@ button .material-symbols-outlined {
   border: 2px dashed #ccc;
   padding: 10px;
   border-radius: 8px;
-  min-height: 150px;
+  min-height: 210px;
   display: flex;
   align-items: center;
   justify-content: center;

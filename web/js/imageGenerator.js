@@ -9,6 +9,7 @@ export class ImageGenerator {
     this.promptQueue = [];
     this.generationCount = 0;
     this.generationHistory = []; // Store complete generation parameters for reuse
+    this.isFirstGeneration = true; // Track if this is the very first generation
     
     // Progress tracking for img2img workflow
     this.workflowProgress = {
@@ -38,6 +39,29 @@ export class ImageGenerator {
     
     this.setupEventListeners();
     console.log("🎯 ImageGenerator initialized");
+  }
+
+  // Method to reset the generator state (useful for debugging)
+  resetState() {
+    console.log("🧹 Resetting ImageGenerator state...");
+    this.promptQueue = [];
+    this.generationCount = 0;
+    this.generationHistory = [];
+    this.isFirstGeneration = true;
+    
+    // Clear results
+    this.results.innerHTML = "";
+    
+    // Hide gallery
+    DOMUtils.$("#gallery").style.display = "none";
+    
+    // Clear gallery contents
+    this.gallery.innerHTML = "";
+    
+    // Reset container state
+    this.contImage.classList.add("empty");
+    
+    console.log("✅ ImageGenerator state reset");
   }
 
   setupEventListeners() {
@@ -196,6 +220,14 @@ export class ImageGenerator {
         imageName: uploadedImageName,
         generationParams: generationParams  // Include full generation parameters
       });
+      
+      console.log("🔍 DEBUG: Added to promptQueue:", {
+        pos: filteredPositive,
+        neg: filteredNegative,
+        mode: useImg2Img ? 'img2img' : 'text2img',
+        imageName: uploadedImageName
+      });
+      console.log("🔍 DEBUG: promptQueue now has", this.promptQueue.length, "items");
 
       // Update loading text to show generation phase
       const loadingText = this.results.querySelector("#loading-text");
@@ -240,9 +272,7 @@ export class ImageGenerator {
 
   handleImageGenerated(images) {
     console.log("🖼️ Handling generated images:", images.length);
-    
-    // Get current generation info before shifting the queue
-    const currentGeneration = this.promptQueue.length > 0 ? this.promptQueue[0] : { pos: "", neg: "", mode: "text2img", imageName: null, generationParams: null };
+    console.log("🔍 DEBUG: promptQueue before processing:", this.promptQueue.length, this.promptQueue);
     
     // Mark workflow as completed
     if (this.workflowProgress.isImg2Img) {
@@ -253,11 +283,33 @@ export class ImageGenerator {
     
     // Move previous image to gallery if exists
     const existingImage = this.results.querySelector(".image-container");
-    if (existingImage) {
+    console.log("🔍 DEBUG: existingImage found:", !!existingImage);
+    console.log("🔍 DEBUG: gallery current children count:", this.gallery.children.length);
+    console.log("🔍 DEBUG: results.innerHTML content:", this.results.innerHTML);
+    console.log("🔍 DEBUG: all elements in results:", this.results.children.length, Array.from(this.results.children).map(el => el.tagName + '.' + el.className));
+    console.log("🔍 DEBUG: isFirstGeneration flag:", this.isFirstGeneration);
+    
+    // Check if the existing image actually loaded successfully
+    // Only images with display: block have loaded successfully
+    const existingImageLoaded = existingImage && existingImage.querySelector('.generated-image[style*="display: block"]');
+    console.log("🔍 DEBUG: existingImage loaded successfully:", !!existingImageLoaded);
+    
+    // Only move to gallery if:
+    // 1. There's an existing image container AND
+    // 2. The image actually loaded successfully AND  
+    // 3. This is not the first generation
+    const shouldMoveToGallery = existingImage && existingImageLoaded && !this.isFirstGeneration;
+    console.log("🔍 DEBUG: shouldMoveToGallery:", shouldMoveToGallery);
+    
+    if (shouldMoveToGallery) {
       console.log("📦 Moving previous image to gallery");
       DOMUtils.$("#gallery").style.display = "block";
 
+      // Get the prompts for the PREVIOUS image that's being moved to gallery
+      // This should be the generation data that was used to create the existing image
       const prompts = this.promptQueue.shift() || { pos: "", neg: "", mode: "text2img", imageName: null, generationParams: null };
+      console.log("🔍 DEBUG: prompts retrieved for gallery:", prompts);
+      console.log("🔍 DEBUG: promptQueue after shift:", this.promptQueue.length, this.promptQueue);
 
       // Add reuse buttons to images being moved to gallery
       const imageWrappers = existingImage.querySelectorAll(".image-wrapper");
@@ -300,7 +352,26 @@ export class ImageGenerator {
       galleryItem.appendChild(existingImage);
       galleryItem.appendChild(promptInfo);
       this.gallery.insertBefore(galleryItem, this.gallery.firstChild);
+    } else {
+      // Don't move anything to gallery because:
+      // - No existing image, OR
+      // - Existing image failed to load, OR  
+      // - This is the first generation
+      if (this.isFirstGeneration) {
+        console.log("🔍 DEBUG: First generation - gallery will remain empty");
+      } else if (existingImage && !existingImageLoaded) {
+        console.log("🔍 DEBUG: Existing image failed to load - not moving to gallery");
+        console.log("🔍 DEBUG: This prevents failed temp images from appearing in gallery");
+      } else if (!existingImage) {
+        console.log("� DEBUG: No existing image found - nothing to move to gallery");
+      }
+      
+      // Do NOT shift the queue - keep prompts for potential retry or debugging
+      console.log("🔍 DEBUG: promptQueue will NOT be shifted");
     }
+
+    // Mark that we're no longer on the first generation
+    this.isFirstGeneration = false;
 
     // Show toast after first generation
     this.generationCount++;
@@ -318,8 +389,11 @@ export class ImageGenerator {
       this.progressbar.style.display = "none";
     }, 1000);
 
+    // Determine the current generation mode (after queue was potentially shifted)
+    const currentGenerationMode = this.promptQueue.length > 0 ? this.promptQueue[0].mode : 'text2img';
+    
     // Show new generated images and track when they're loaded
-    this.displayNewImages(images, currentGeneration.mode);
+    this.displayNewImages(images, currentGenerationMode);
     
     console.log("✅ Image generation completed successfully");
   }

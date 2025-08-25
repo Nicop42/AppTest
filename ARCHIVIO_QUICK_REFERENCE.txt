@@ -1,0 +1,35 @@
+/* 
+🖼️ QUICK REFERENCE - ARCHIVIO IMAGE NAMES
+==============================================
+
+TO CHANGE IMAGE NAMES:
+1. Open: web/js/archivioConfig.js
+2. Find the image you want to change
+3. Edit the "name" field
+4. Save and refresh the page
+
+EXAMPLE:
+--------
+archivio1: {
+  image: "archivio1.jpg",
+  name: "PUT YOUR NEW NAME HERE", // ← Change this!
+  order: 9
+}
+
+CURRENT NAMES (in display order):
+---------------------------------
+Order 1: archivio7.jpg → "Historical Painting"
+Order 2: archivio2.jpg → "Renaissance Scene"
+Order 3: archivio8.jpg → "Artistic Study"
+Order 4: archivio3.jpg → "Baroque Masterpiece"
+Order 5: archivio4.jpg → "Impressionist Landscape"
+Order 6: archivio5.jpg → "Modern Abstract"
+Order 7: archivio6.jpg → "Contemporary Art"
+Order 8: archivio9.jpg → "Cultural Heritage"
+Order 9: archivio1.jpg → "Classical Portrait"
+Order 10: archivio10.jpg → "Museum Collection"
+
+REMEMBER: After editing, save the file and refresh your webpage!
+
+For detailed instructions, see: ARCHIVIO_MANAGEMENT_GUIDE.md
+*/

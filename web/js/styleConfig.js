@@ -33,86 +33,86 @@ export const DISPLAY_CONFIG = {
 export const STYLE_CONFIG = {
   style1: {
     image: "stile1.png",
-    name: "Renaissance Art",
+    name: "Dipinto rinascimentale",
     positivePrompt: "renaissance painting, highly detailed, vibrant colors, 4k, trending on artstation, masterpiece",
     negativePrompt: "modern, digital, pixelated, low quality"
   },
   
   style2: {
     image: "stile2.png", 
-    name: "Pencil Sketch",
+    name: "Disegno a matita",
     positivePrompt: "pencil sketch, detailed linework, monochrome, hatching, cross-hatching, artistic drawing",
     negativePrompt: "colorful, painted, digital, photorealistic"
   },
   
   style3: {
     image: "stile3.png",
-    name: "Impressionist", 
+    name: "Quadro impressionista",
     positivePrompt: "impressionist style, soft brush strokes, vibrant colors, natural light",
     negativePrompt: "sharp, defined edges, digital"
   },
   
   style4: {
     image: "stile4.jpg",
-    name: "Cartoon",
+    name: "Cartone animato",
     positivePrompt: "cartoon style, bold outlines, bright colors, exaggerated features",
     negativePrompt: "realistic, photorealistic, dark, gritty"
   },
   
   style5: {
     image: "stile5.png", 
-    name: "Watercolor",
-    positivePrompt: "japanese watercolor, soft washes, delicate details, nature scenes",
+    name: "Quadro ad acquerello",
+    positivePrompt: "watercolor, soft washes, delicate details, nature scenes",
     negativePrompt: "oil painting, thick paint, heavy brushstrokes"
   },
   
   style6: {
     image: "stile6.png",
-    name: "Cubism", 
-    positivePrompt: "cubism painting style, mondrian style, vibrant geometric shapes, abstract composition",
+    name: "Illstrazione giapponese", 
+    positivePrompt: "japanese painting style",
     negativePrompt: "realistic, photorealistic, curved lines"
   },
   
   style7: {
     image: "stile7.png",
-    name: "Abstract",
+    name: "Quadro Astratto",
     positivePrompt: "kandinsky style, abstract shapes, vibrant colors, geometric patterns", 
     negativePrompt: "realistic, figurative, photorealistic"
   },
   
   style8: {
     image: "stile8.png", 
-    name: "Art Nouveau",
-    positivePrompt: "art nouveau, flowing lines, organic shapes, intricate details",
-    negativePrompt: "geometric, angular, minimalist"
+    name: "Quadro di kandinsky",
+    positivePrompt: "kandinsky style, abstract shapes, vibrant colors, geometric patterns",
+    negativePrompt: "realistic, figurative, photorealistic"
   },
   
   style9: {
     image: "stile9.png",
-    name: "Vector",
-    positivePrompt: "vector style, vibrant colors with brushstrokes, clean lines, flat design", 
-    negativePrompt: "sketchy, rough, textured, photorealistic"
+    name: "Dipinto art nouveau",
+    positivePrompt: "art nouveau, flowing lines, organic shapes, intricate details",
+    negativePrompt: "geometric, angular, minimalist"
   },
   
   style10: {
     image: "stile10.png",
-    name: "PopArt", 
-    positivePrompt: "pop art, bold colors, comic book style, cultural references",
-    negativePrompt: "muted colors, realistic, classical"
+    name: "Vector style", 
+    positivePrompt: "vector style illustration, bidimensional",
+    negativePrompt: "realistic"
   },
   
   style11: {
     image: "stile11.png",
-    name: "Steampunk",
-    positivePrompt: "steampunk style, intricate details, Victorian aesthetics, machinery, gears",
-    negativePrompt: "modern, minimalistic, flat design"
+    name: "Pop-art",
+    positivePrompt: "pop art, bold colors, comic book style, cultural references",
+    negativePrompt: "muted colors, realistic, classical"
   },
   
   style12: {
     image: "stile12.png", 
-    name: "Surreal",
-    positivePrompt: "surreal painting, dreamlike scenes, bizarre imagery, vibrant colors, dali style",
-    negativePrompt: "smooth, digital, realistic, sharp edges"
+    name: "Steampunk",
+    positivePrompt: "steampunk style, intricate details, Victorian aesthetics, machinery, gears",
+    negativePrompt: "modern, minimalistic, flat design"
   }
 };
 

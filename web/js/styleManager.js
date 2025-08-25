@@ -94,10 +94,13 @@ export class StyleManager {
     const stileBlock = document.createElement('div');
     stileBlock.className = 'stile-block';
     
+    // Add cache-busting parameter to force image reload
+    const timestamp = new Date().getTime();
+    
     stileBlock.innerHTML = `
       <button type="button" data-stile="${styleId}" class="style-btn">
         <img
-          src="images/${config.image}"
+          src="images/${config.image}?t=${timestamp}"
           alt="${config.name}"
           width="200"
           height="200"

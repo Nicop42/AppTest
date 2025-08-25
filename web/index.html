@@ -1,517 +1,230 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Prompting Heritage</title>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
-      rel="stylesheet"
-    />
-    <!-- Swiper -->
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"
-    />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Prompting Heritage</title>
     <!-- Bootstrap 5 CSS -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <!-- ✅ CORRETTO: Usa percorsi   -->
-    <link rel="stylesheet" href="css/dungeon.css" />
-  </head>
-  <body>
-    <div class="page">
-      <main class="main-content" role="main">
-        <div id="created-img-container" class="empty">
-          <section id="results" aria-live="polite" aria-atomic="true">
-            <!-- Output generato -->
-          </section>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <!-- Custom styles for landing page -->
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .welcome-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .welcome-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: 2rem;
+        }
+        
+        .welcome-title {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .welcome-subtitle {
+            color: #7f8c8d;
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+        
+        .enter-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            padding: 1rem 2.5rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 50px;
+            color: white;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .enter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+        
+        .enter-btn:active {
+            transform: translateY(0);
+        }
+        
+        .features {
+            margin-top: 2rem;
+            color: #34495e;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+            font-size: 1rem;
+        }
+        
+        .feature-icon {
+            color: #667eea;
+            font-size: 1.2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .welcome-card {
+                padding: 2rem;
+                margin: 1rem;
+            }
+            
+            .welcome-title {
+                font-size: 2rem;
+            }
+            
+            .welcome-subtitle {
+                font-size: 1rem;
+            }
+            
+            .enter-btn {
+                padding: 0.8rem 2rem;
+                font-size: 1rem;
+            }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="welcome-container">
+        <div class="welcome-card">
+            <h1 class="welcome-title">
+                <span class="material-symbols-outlined" style="font-size: 3rem; vertical-align: middle; margin-right: 0.5rem; color: #667eea;">
+                    palette
+                </span>
+                Prompting Heritage
+            </h1>
+            
+            <p class="welcome-subtitle">
+                Trasforma le tue idee in immagini straordinarie con il nostro generatore AI avanzato. 
+                Esplora stili unici e crea opere d'arte personalizzate.
+            </p>
+            
+            <div class="features">
+                <div class="feature-item">
+                    <span class="material-symbols-outlined feature-icon">auto_awesome</span>
+                    <span>Generazione AI avanzata</span>
+                </div>
+                <div class="feature-item">
+                    <span class="material-symbols-outlined feature-icon">palette</span>
+                    <span>Stili artistici multipli</span>
+                </div>
+                <div class="feature-item">
+                    <span class="material-symbols-outlined feature-icon">photo_library</span>
+                    <span>Archivio immagini integrato</span>
+                </div>
+            </div>
+            
+            <div style="margin-top: 2.5rem;">
+                <a href="app.html" class="enter-btn pulse">
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                    Inizia a Creare
+                </a>
+            </div>
+            
+            <p style="margin-top: 1.5rem; font-size: 0.9rem; color: #95a5a6;">
+                Premi il pulsante per accedere al generatore di immagini
+            </p>
         </div>
-        <!-- progress bar -->
-        <div id="progress-wrap">
-          <label for="main-progress" class="visually-hidden">Progress</label>
-          <progress
-            id="main-progress"
-            value="0"
-            max="100"
-            aria-live="polite"
-            aria-valuetext="0 percent"
-          ></progress>
-        </div>
-        <!-- fine progress bar -->
-        <div id="toast" class="toast hidden">
-          <span class="material-symbols-outlined"> arrow_circle_down </span>
-          Scorri in basso per vedere le immagini precedenti
-        </div>
-        <!-- Form di configurazione -->
-        <form
-          class="sidebar padding-x padding-y"
-          id="prompt-form"
-          aria-labelledby="prompt-config-heading"
-        >
-          <div class="left-content-box">
-            <h1 id="prompt-config-heading">Descrivi la tua immagine</h1>
-            <div class="form-item-wrap">
-              <label for="positive">Positive Prompt</label>
-              <input
-                type="text"
-                id="positive"
-                placeholder="Cosa vuoi inserire..."
-                aria-describedby="positive-desc"
-              />
-              <p id="positive-desc" class="visually-hidden">
-                Describe the desired elements of your prompt.
-              </p>
-            </div>
-
-            <div class="form-item-wrap">
-              <label for="negative">Negative Prompt</label>
-              <input
-                type="text"
-                id="negative"
-                placeholder="Cosa vuoi escludere..."
-                aria-describedby="negative-desc"
-              />
-              <p id="negative-desc" class="visually-hidden">
-                Describe elements to exclude from the result.
-              </p>
-            </div>
-
-            <div hidden>
-              <label for="seed">Seed</label>
-              <input
-                type="text"
-                id="seed"
-                placeholder="Leave blank for random"
-                aria-describedby="seed-desc"
-              />
-              <p id="seed-desc">
-                Enter a number to use as a seed or leave blank to randomize.
-              </p>
-
-              <label class="checkbox-label" for="randomSeed">
-                <input type="checkbox" id="randomSeed" checked />
-                Use random seed
-              </label>
-            </div>
-            <!-- blocco stili -->
-            <div id="container-stili">
-              <h2>Aggiungi uno stile</h2>
-
-              <!-- Primary styles container - will be populated dynamically -->
-              <div id="primary-styles" class="wrapper-stili">
-                <!-- Styles will be generated dynamically from styleConfig.js -->
-              </div>
-
-              <!-- Additional styles container - will be populated dynamically -->
-              <div id="more-styles" style="display: none" class="wrapper-stili">
-                <!-- Additional styles will be generated dynamically from styleConfig.js -->
-              </div>
-
-              <button id="toggle-styles">Scopri altri stili</button>
-              <!-- fine più stili -->
-            </div>
-
-            <!-- fine stili -->
-
-            <!-- usa una tua foto -->
-            <!-- Bottone che apre la modale -->
-            <div id="use-photo-section">
-              <h2>Utilizza una tua foto</h2>
-              <div class="d-flex align-middle use-photo-text">
-                <p>Scegli una foto dal tuo device</p>
-                <button
-                  type="button"
-                  class="secondary"
-                  data-bs-toggle="modal"
-                  data-bs-target="#usePhotoModal"
-                >
-                  <span class="material-symbols-outlined"> upload_file </span>
-                  Carica foto
-                </button>
-              </div>
-
-              <!-- Input "nascosti" -->
-              <input
-                type="file"
-                id="cameraInput"
-                accept="image/jpeg, image/png"
-                capture="environment"
-                style="display: none"
-              />
-              <input
-                type="file"
-                id="uploadInput"
-                accept="image/jpeg, image/png"
-                style="display: none"
-              />
-            </div>
-
-            <!-- Modale Bootstrap -->
-            <div
-              class="modal fade"
-              id="usePhotoModal"
-              tabindex="-1"
-              aria-hidden="true"
-            >
-              <div class="modal-dialog">
-                <div class="modal-content">
-                  <div class="modal-header">
-                    <h2 class="modal-title">Utilizza un'immagine</h2>
-                    <button
-                      type="button"
-                      class="btn-close"
-                      data-bs-dismiss="modal"
-                      aria-label="Close"
-                    ></button>
-                  </div>
-                  <div class="modal-body text-center">
-                    <h3>Galleria personale/Fotocamera</h3>
-                    <div class="d-flex use-photo-btnWarp">
-                      <button type="button" class="secondary" id="takePhotoBtn">
-                        <span class="material-symbols-outlined">
-                          photo_camera </span
-                        >Scatta foto
-                      </button>
-                      <button
-                        type="button"
-                        class="secondary"
-                        id="uploadPhotoBtn"
-                      >
-                        <span class="material-symbols-outlined">
-                          image_arrow_up
-                        </span>
-                        Seleziona immagine
-                      </button>
-                    </div>
-
-                    <div id="previewArea" class="mt-3"></div>
-                    <hr />
-                    <h3>Scegli tra le proposte del museo</h3>
-                    <div id="carosello-archivio">
-                      <div id="carosello-archivio-wrapper">
-                        <div class="swiper swiper-archivio">
-                          <div class="swiper-wrapper">
-                            <div class="swiper-slide">
-                              <button type="button" class="img-archivio-btn">
-                                <img
-                                  src="images/archivio7.jpg"
-                                  width="200"
-                                  height="200"
-                                />
-                                <span class="nome-stile">Nome immagine</span>
-                              </button>
-                            </div>
-                            <div class="swiper-slide">
-                              <button type="button" class="img-archivio-btn">
-                                <img
-                                  src="images/archivio2.jpg"
-                                  width="200"
-                                  height="200"
-                                />
-                                <span class="nome-stile">Nome immagine</span>
-                              </button>
-                            </div>
-                            <div class="swiper-slide">
-                              <button type="button" class="img-archivio-btn">
-                                <img
-                                  src="images/archivio8.jpg"
-                                  width="200"
-                                  height="200"
-                                />
-                                <span class="nome-stile">Nome immagine</span>
-                              </button>
-                            </div>
-
-                            <div class="swiper-slide">
-                              <button type="button" class="img-archivio-btn">
-                                <img
-                                  src="images/archivio3.jpg"
-                                  width="200"
-                                  height="200"
-                                />
-                                <span class="nome-stile">Nome immagine</span>
-                              </button>
-                            </div>
-                            <div class="swiper-slide">
-                              <button type="button" class="img-archivio-btn">
-                                <img
-                                  src="images/archivio4.jpg"
-                                  width="200"
-                                  height="200"
-                                />
-                                <span class="nome-stile">Nome immagine</span>
-                              </button>
-                            </div>
-                            <div class="swiper-slide">
-                              <button type="button" class="img-archivio-btn">
-                                <img
-                                  src="images/archivio5.jpg"
-                                  width="200"
-                                  height="200"
-                                />
-                                <span class="nome-stile">Nome immagine</span>
-                              </button>
-                            </div>
-                            <div class="swiper-slide">
-                              <button type="button" class="img-archivio-btn">
-                                <img
-                                  src="images/archivio6.jpg"
-                                  width="200"
-                                  height="200"
-                                />
-                                <span class="nome-stile">Nome immagine</span>
-                              </button>
-                            </div>
-
-                            <div class="swiper-slide">
-                              <button type="button" class="img-archivio-btn">
-                                <img
-                                  src="images/archivio9.jpg"
-                                  width="200"
-                                  height="200"
-                                />
-                                <span class="nome-stile">Nome immagine</span>
-                              </button>
-                            </div>
-                            <div class="swiper-slide">
-                              <button type="button" class="img-archivio-btn">
-                                <img
-                                  src="images/archivio1.jpg"
-                                  width="200"
-                                  height="200"
-                                />
-                                <span class="nome-stile">Nome immagine</span>
-                              </button>
-                            </div>
-                            <div class="swiper-slide">
-                              <button type="button" class="img-archivio-btn">
-                                <img
-                                  src="images/archivio10.jpg"
-                                  width="200"
-                                  height="200"
-                                />
-                                <span class="nome-stile">Nome immagine</span>
-                              </button>
-                            </div>
-                          </div>
-                          <!-- <div class="swiper-button-prev" aria-label="Precedente"></div>
-                  <div class="swiper-button-next" aria-label="Successivo"></div> -->
-                          <div class="swiper-pagination"></div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="modal-footer d-flex justify-content-between">
-                    <button
-                      type="button"
-                      class="btn btn-outline-danger"
-                      id="reset-photo"
-                    >
-                      <span class="material-symbols-outlined"> replay </span>
-                      Reset
-                    </button>
-                    <button
-                      type="button"
-                      class="btn btn-dark"
-                      id="apply-photo"
-                      data-bs-dismiss="modal"
-                    >
-                      <span class="material-symbols-outlined">
-                        check_circle
-                      </span>
-                      Applica
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- fine usa una tua foto -->
-            <!-- pulsanti -->
-            <div id="button-wrap">
-              <button
-                id="filter"
-                type="button"
-                data-bs-toggle="modal"
-                data-bs-target="#filtersModal"
-                aria-label="Apri filtri"
-              >
-                <span class="material-symbols-outlined"> discover_tune </span>
-                Impostazioni
-              </button>
-              <button id="generate" type="button" aria-label="Generate prompt">
-                <span class="material-symbols-outlined">auto_awesome</span>
-                Genera
-              </button>
-            </div>
-            <!-- fine pulsanti -->
-          </div>
-        </form>
-        <!-- Modale -->
-        <div
-          class="modal fade"
-          id="filtersModal"
-          tabindex="-1"
-          aria-labelledby="filtersModalLabel"
-          aria-hidden="true"
-        >
-          <div
-            class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg"
-          >
-            <div class="modal-content">
-              <div class="modal-header">
-                <h2 class="modal-title" id="filtersModalLabel">
-                  Modifica impostazioni immagine
-                </h2>
-                <button
-                  type="button"
-                  class="btn-close"
-                  data-bs-dismiss="modal"
-                  aria-label="Chiudi"
-                ></button>
-              </div>
-              <div class="modal-body">
-                <!-- Seed -->
-                <div class="row-filtro">
-                  <div class="form-check form-switch mb-2">
-                    <input
-                      class="form-check-input"
-                      type="checkbox"
-                      id="filter-seed-toggle"
-                    />
-                    <label class="form-check-label" for="filter-seed-toggle"
-                      ><strong>Usa Seed personalizzato</strong>
-                    </label>
-                  </div>
-                  <input
-                    type="number"
-                    class="form-control"
-                    id="filter-seed-value"
-                    placeholder="Es. 123456"
-                  />
-                  <div class="form-text">
-                    Il seed controlla la casualità: stesso seed = immagine
-                    simile.
-                  </div>
-                </div>
-
-                <!-- Formato -->
-                <div class="row-filtro">
-                  <label class="form-label"
-                    ><strong>Formato immagine</strong>
-                  </label>
-                  <div class="btn-group w-100" role="group">
-                    <button
-                      type="button"
-                      class="btn btn-outline-dark format-btn"
-                      data-format="vertical"
-                    >
-                      <span class="material-symbols-outlined"> crop_9_16 </span>
-                      Verticale
-                    </button>
-                    <button
-                      type="button"
-                      class="btn btn-outline-dark format-btn"
-                      data-format="horizontal"
-                    >
-                      <span class="material-symbols-outlined"> crop_16_9 </span>
-                      Orizzontale
-                    </button>
-                    <button
-                      type="button"
-                      class="btn btn-outline-dark format-btn"
-                      data-format="square"
-                    >
-                      <span class="material-symbols-outlined">
-                        crop_square
-                      </span>
-                      Quadrata
-                    </button>
-                  </div>
-                </div>
-
-                <!-- Qualità -->
-                <div class="row-filtro">
-                  <label for="filter-quality" class="form-label"
-                    ><strong>Qualità immagine:</strong>
-                    <span id="quality-value">15</span></label
-                  >
-                  <input
-                    type="range"
-                    class="form-range"
-                    min="0"
-                    max="150"
-                    value="15"
-                    id="filter-quality"
-                  />
-                  <div class="form-text">
-                    Maggiore qualità = più dettagli, ma tempi più lunghi.
-                  </div>
-                </div>
-
-                <!-- Definizione -->
-                <div class="mb-2">
-                  <label for="filter-definition" class="form-label"
-                    ><strong>Definizione immagine:</strong>
-                    <span id="definition-value">75</span></label
-                  >
-                  <input
-                    type="range"
-                    class="form-range"
-                    min="0"
-                    max="150"
-                    value="75"
-                    id="filter-definition"
-                  />
-                  <div class="form-text">
-                    Controlla nitidezza e chiarezza dell'immagine finale.
-                  </div>
-                </div>
-              </div>
-
-              <!-- Pulsanti finali -->
-              <div class="modal-footer d-flex justify-content-between">
-                <button
-                  type="button"
-                  class="btn btn-outline-danger"
-                  id="reset-filters"
-                >
-                  <span class="material-symbols-outlined"> replay </span> Reset
-                </button>
-                <button
-                  type="button"
-                  class="btn btn-dark"
-                  id="apply-filters"
-                  data-bs-dismiss="modal"
-                >
-                  <span class="material-symbols-outlined"> check_circle </span>
-                  Applica
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- -->
-
-        <!-- -->
-        <section id="gallery" class="padding-x">
-          <h2>Immagini precedenti</h2>
-          <div id="gallery-images"></div>
-        </section>
-      </main>
-
-      <!-- Risultati -->
     </div>
-    <footer class="page-footer"></footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    <!-- Bootstrap Bundle JS (con Popper) -->
+    <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Modular JavaScript files -->
-    <script type="module" src="js/app.js"></script>
-  </body>
+    
+    <script>
+        // Add some interactive effects
+        document.addEventListener('DOMContentLoaded', function() {
+            const enterBtn = document.querySelector('.enter-btn');
+            
+            // Add click effect
+            enterBtn.addEventListener('click', function(e) {
+                // Create ripple effect
+                const ripple = document.createElement('span');
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+                
+                ripple.style.cssText = `
+                    position: absolute;
+                    border-radius: 50%;
+                    transform: scale(0);
+                    animation: ripple 0.6s linear;
+                    background-color: rgba(255, 255, 255, 0.7);
+                    left: ${x}px;
+                    top: ${y}px;
+                    width: ${size}px;
+                    height: ${size}px;
+                    pointer-events: none;
+                `;
+                
+                this.style.position = 'relative';
+                this.style.overflow = 'hidden';
+                this.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        });
+        
+        // Add ripple animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
 </html>

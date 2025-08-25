@@ -45,85 +45,60 @@ export class PhotoUpload {
 
   setupEventListeners() {
     /* IMMAGINI MUSEO */
-    // creo il carosello quando viene aperta la modale
+    // Setup archivio image click handlers when modal is shown
     if (this.usePhotoModal) {
-      let initSwiper = 0;
       // Store reference to this for use in event listeners
       const photoUploadInstance = this;
       
       this.usePhotoModal.addEventListener("show.bs.modal", function (event) {
-        console.log("show.bs.modal");
-        if (initSwiper == 0) {
-          // Make sure Swiper is available
-          if (typeof Swiper !== 'undefined') {
-            const swiper = new Swiper(".swiper-archivio", {
-              // Optional parameters
-              slidesPerView: 4,
-              spaceBetween: 10,
-              loop: false,
-              breakpoints: {
-                640: {
-                  slidesPerView: 5,
-                  spaceBetween: 10,
-                },
-              },
-              // If we need pagination
-              pagination: {
-                el: ".swiper-pagination",
-                clickable: true,
-              },
-            });
-            console.log("✅ Swiper initialized for archivio images");
-          } else {
-            console.error("❌ Swiper not available");
-          }
+        console.log("show.bs.modal - Setting up archivio image handlers");
+        
+        // Setup click handlers for archivio images (Swiper is initialized by archivioManager)
+        setTimeout(() => {
+          document.querySelectorAll(".img-archivio-btn").forEach((btn) => {
+            btn.addEventListener("click", async () => {
+              const slide = btn.closest(".swiper-slide");
+              const isActive = slide.classList.contains("active");
 
-          initSwiper++;
-        }
+              // Rimuove "active" da tutti gli swiper-slide
+              document
+                .querySelectorAll(".swiper-slide")
+                .forEach((s) => s.classList.remove("active"));
 
-        document.querySelectorAll(".img-archivio-btn").forEach((btn) => {
-          btn.addEventListener("click", async () => {
-            const slide = btn.closest(".swiper-slide");
-            const isActive = slide.classList.contains("active");
-
-            // Rimuove "active" da tutti gli swiper-slide
-            document
-              .querySelectorAll(".swiper-slide")
-              .forEach((s) => s.classList.remove("active"));
-
-            // Se non era già attivo, attivalo
-            if (!isActive) {
-              slide.classList.add("active");
-              const imgElement = btn.querySelector("img");
-              const imagePath = imgElement.src;
-              const imageName = imagePath.split("/").pop(); // Get filename from path
-              
-              console.log(`🖼️ Archivio image selected: ${imageName}`);
-              
-              try {
-                // Load the archivio image for img2img processing
-                await photoUploadInstance.loadArchivioImage(imagePath, imageName);
+              // Se non era già attivo, attivalo
+              if (!isActive) {
+                slide.classList.add("active");
+                const imgElement = btn.querySelector("img");
+                const imagePath = imgElement.src;
+                const imageName = imagePath.split("/").pop(); // Get filename from path
                 
-                // Close the modal after successful selection
-                if (photoUploadInstance.usePhotoModal && typeof bootstrap !== 'undefined') {
-                  const modal = bootstrap.Modal.getInstance(photoUploadInstance.usePhotoModal);
-                  if (modal) {
-                    modal.hide();
+                console.log(`🖼️ Archivio image selected: ${imageName}`);
+                
+                try {
+                  // Load the archivio image for img2img processing
+                  await photoUploadInstance.loadArchivioImage(imagePath, imageName);
+                  
+                  // Close the modal after successful selection
+                  if (photoUploadInstance.usePhotoModal && typeof bootstrap !== 'undefined') {
+                    const modal = bootstrap.Modal.getInstance(photoUploadInstance.usePhotoModal);
+                    if (modal) {
+                      modal.hide();
+                    } else {
+                      // If no instance exists, create one and hide it
+                      const newModal = new bootstrap.Modal(photoUploadInstance.usePhotoModal);
+                      newModal.hide();
+                    }
                   } else {
-                    // If no instance exists, create one and hide it
-                    const newModal = new bootstrap.Modal(photoUploadInstance.usePhotoModal);
-                    newModal.hide();
+                    console.warn("Bootstrap not available or modal not found");
                   }
-                } else {
-                  console.warn("Bootstrap not available or modal not found");
+                } catch (error) {
+                  console.error("❌ Error loading archivio image:", error);
+                  alert(`Errore nel caricamento dell'immagine: ${error.message}`);
                 }
-              } catch (error) {
-                console.error("❌ Error loading archivio image:", error);
-                alert(`Errore nel caricamento dell'immagine: ${error.message}`);
               }
-            }
+            });
           });
-        });
+        }, 100); // Small delay to ensure DOM is ready
       });
     }
 

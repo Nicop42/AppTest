@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Style Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 900px; }
+        .style-test { border: 1px solid #ddd; padding: 15px; border-radius: 8px; text-align: center; }
+        .style-test img { width: 150px; height: 150px; object-fit: cover; border: 2px solid #ccc; }
+        .style-test h3 { margin: 10px 0 5px 0; color: #333; }
+        .config-info { background: #f5f5f5; padding: 8px; margin-top: 10px; font-size: 0.9em; }
+        .highlight { background: yellow; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>🎨 Style Configuration Debug Test</h1>
+    <p>This page shows the actual configuration from styleConfig.js vs what should be displayed.</p>
+    
+    <div class="test-container">
+        <div class="style-test">
+            <h3>style4 (Cartone animato)</h3>
+            <img id="style4-img" src="images/stile4.jpg" alt="Style 4">
+            <div class="config-info">
+                <strong>Config says:</strong> <span id="style4-config">Loading...</span><br>
+                <strong>Image file:</strong> stile4.jpg
+            </div>
+        </div>
+        
+        <div class="style-test highlight">
+            <h3>style5 (Quadro ad acquerello)</h3>
+            <img id="style5-img" src="images/stile5.png" alt="Style 5">
+            <div class="config-info">
+                <strong>Config says:</strong> <span id="style5-config">Loading...</span><br>
+                <strong>Image file:</strong> stile5.png
+            </div>
+        </div>
+        
+        <div class="style-test">
+            <h3>style6 (Quadro cubista)</h3>
+            <img id="style6-img" src="images/stile6.png" alt="Style 6">
+            <div class="config-info">
+                <strong>Config says:</strong> <span id="style6-config">Loading...</span><br>
+                <strong>Image file:</strong> stile6.png
+            </div>
+        </div>
+    </div>
+    
+    <div style="margin-top: 30px; padding: 20px; background: #e3f2fd; border-radius: 8px;">
+        <h2>📋 Debug Results:</h2>
+        <div id="debug-results">
+            <p>Loading configuration...</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import { STYLE_CONFIG } from './js/styleConfig.js';
+        
+        console.log("🔍 STYLE_CONFIG loaded:", STYLE_CONFIG);
+        
+        // Update config display
+        document.getElementById('style4-config').textContent = STYLE_CONFIG.style4.image;
+        document.getElementById('style5-config').textContent = STYLE_CONFIG.style5.image;
+        document.getElementById('style6-config').textContent = STYLE_CONFIG.style6.image;
+        
+        // Debug results
+        const debugResults = document.getElementById('debug-results');
+        
+        let debugHTML = `
+            <p><strong>✅ Configuration Check:</strong></p>
+            <ul>
+                <li><strong>style4:</strong> "${STYLE_CONFIG.style4.image}" (should be stile4.jpg) - ${STYLE_CONFIG.style4.image === 'stile4.jpg' ? '✅ CORRECT' : '❌ WRONG'}</li>
+                <li><strong>style5:</strong> "${STYLE_CONFIG.style5.image}" (should be stile5.png) - ${STYLE_CONFIG.style5.image === 'stile5.png' ? '✅ CORRECT' : '❌ WRONG'}</li>
+                <li><strong>style6:</strong> "${STYLE_CONFIG.style6.image}" (should be stile6.png) - ${STYLE_CONFIG.style6.image === 'stile6.png' ? '✅ CORRECT' : '❌ WRONG'}</li>
+            </ul>
+        `;
+        
+        if (STYLE_CONFIG.style5.image === 'stile5.png') {
+            debugHTML += `
+                <p><strong>🎯 Conclusion:</strong></p>
+                <div style="background: #d4edda; padding: 10px; border-radius: 4px; border-left: 4px solid #28a745;">
+                    <strong>✅ Your styleConfig.js is CORRECT!</strong><br>
+                    The issue is likely browser caching. Try:
+                    <ol>
+                        <li>Hard refresh (Ctrl + F5)</li>
+                        <li>Clear browser cache</li>
+                        <li>Open in incognito/private mode</li>
+                    </ol>
+                </div>
+            `;
+        } else {
+            debugHTML += `
+                <p><strong>🚨 Configuration Error Found:</strong></p>
+                <div style="background: #f8d7da; padding: 10px; border-radius: 4px; border-left: 4px solid #dc3545;">
+                    <strong>❌ There's an error in your styleConfig.js file!</strong><br>
+                    Check the configuration for style5.
+                </div>
+            `;
+        }
+        
+        debugResults.innerHTML = debugHTML;
+        
+        // Test image loading
+        const style5Image = document.getElementById('style5-img');
+        style5Image.addEventListener('load', () => {
+            console.log('✅ stile5.png loaded successfully');
+        });
+        style5Image.addEventListener('error', () => {
+            console.log('❌ stile5.png failed to load');
+            style5Image.style.border = '2px solid red';
+            style5Image.alt = 'IMAGE FAILED TO LOAD';
+        });
+    </script>
+</body>
+</html>

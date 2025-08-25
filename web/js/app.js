@@ -7,7 +7,9 @@ import { ImageGenerator } from './imageGenerator.js';
 import { PhotoUpload } from './photoUpload.js';
 import { WebSocketHandler } from './websocketHandler.js';
 import { STYLE_CONFIG, DISPLAY_CONFIG } from './styleConfig.js';
+import { initializeArchivioCarousel } from './archivioManager.js';
 
+console.log("🔍 DEBUG: All modules imported successfully");
 console.log("🔍 DEBUG: STYLE_CONFIG imported directly in app.js:", STYLE_CONFIG);
 console.log("🔍 DEBUG: DISPLAY_CONFIG imported directly in app.js:", DISPLAY_CONFIG);
 
@@ -49,6 +51,20 @@ class App {
       
       // Initialize WebSocket handler (depends on image generator)
       this.websocketHandler = new WebSocketHandler(this.clientId, this.imageGenerator);
+
+      console.log("🎯 About to initialize archivio carousel...");
+      
+      // Initialize archivio carousel with dynamic configuration
+      // Wait a bit to ensure all other components are ready
+      setTimeout(() => {
+        console.log("🎯 Calling initializeArchivioCarousel...");
+        try {
+          initializeArchivioCarousel();
+          console.log("🎯 initializeArchivioCarousel called successfully");
+        } catch (error) {
+          console.error("🎯 Error calling initializeArchivioCarousel:", error);
+        }
+      }, 500);
 
       console.log("✅ App initialized successfully");
       console.log("📝 Client ID:", this.clientId.slice(0, 8));

@@ -29,6 +29,11 @@ server.PromptServer.instance.app.middlewares.append(cors_middleware)
 # === Static and HTML Routes ===
 @server.PromptServer.instance.routes.get("/test")
 def dungeon_entrance(request):
+    return web.FileResponse(os.path.join(WEBROOT, "landing.html"))
+
+# Serve index.html at /test/index.html
+@server.PromptServer.instance.routes.get("/test/index.html")
+def dungeon_index(request):
     return web.FileResponse(os.path.join(WEBROOT, "index.html"))
 
 # ✅ AGGIUNTO: Supporto per percorsi originali /test/

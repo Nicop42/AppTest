@@ -19,62 +19,62 @@
 
 export const ARCHIVIO_CONFIG = {
   archivio1: {
-    image: "archivio1.jpg",
-    name: "Donna in biblioteca",
+    image: "archivio1.png",
+    name: "Assalto al castello",
     order: 9
   },
   
   archivio2: {
-    image: "archivio2.jpg", 
-    name: "Barche sulla spiaggia",
+    image: "archivio2.png", 
+    name: "Tempio del Moloch",
     order: 2
   },
   
   archivio3: {
-    image: "archivio3.jpg",
-    name: "Entrata di un palazzo",
+    image: "archivio3.png",
+    name: "Entrata esotica",
     order: 4
   },
   
   archivio4: {
-    image: "archivio4.jpg",
-    name: "Sguardo all'orizzonte", 
+    image: "archivio4.png",
+    name: "Casa di Batto", 
     order: 5
   },
   
   archivio5: {
-    image: "archivio5.jpg",
-    name: "Cortile interno",
+    image: "archivio5.png",
+    name: "Sofonisba",
     order: 6
   },
   
   archivio6: {
-    image: "archivio6.jpg",
-    name: "Skyline",
+    image: "archivio6.png",
+    name: "Entrata del Moloch",
     order: 7
   },
   
   archivio7: {
-    image: "archivio7.jpg",
-    name: "Primo piano",
+    image: "archivio7.png",
+    name: "Matrimonio",
     order: 1
   },
   
   archivio8: {
-    image: "archivio8.jpg",
-    name: "Occhi", 
+    image: "archivio8.png",
+    name: "Maciste", 
     order: 3
   },
   
   archivio9: {
-    image: "archivio9.jpg",
-    name: "Cafè",
+    image: "archivio9.png",
+    name: "Archimede",
     order: 8
   },
   
   archivio10: {
-    image: "archivio10.jpg",
-    name: "Dune di Sabbia",
+    image: "archivio10.png",
+    name: "Generale Romano",
     order: 10
   }
 };

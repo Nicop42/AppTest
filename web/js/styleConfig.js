@@ -33,51 +33,51 @@ export const DISPLAY_CONFIG = {
 export const STYLE_CONFIG = {
   style1: {
     image: "stile1.png",
-    name: "Dipinto rinascimentale",
-    positivePrompt: "renaissance painting, highly detailed, vibrant colors, 4k, trending on artstation, masterpiece",
+    name: "Dipinto di Lawrence Alma Tadema",
+    positivePrompt: "lawrence alma tadema painting style, classical painting, detailed, realistic, vibrant colors",
     negativePrompt: "modern, digital, pixelated, low quality"
   },
   
   style2: {
     image: "stile2.png", 
-    name: "Disegno a matita",
-    positivePrompt: "pencil sketch, detailed linework, monochrome, hatching, cross-hatching, artistic drawing",
-    negativePrompt: "colorful, painted, digital, photorealistic"
+    name: "Film muto",
+    positivePrompt: " A dramatic black-and-white cinematic still in the style of a 1920s silent film. High-contrast lighting with deep shadows, film grain texture, soft lens blur, and slightly faded tones. Classical Italian set design with monumental architecture and dramatic costumes. Expressionist atmosphere, strong chiaroscuro, subtle sepia tint, and vintage film imperfections like scratches and vignetting. Framed as if from an old nitrate film reel, evoking early cinema grandeur and silent movie storytelling.",
+    negativePrompt: "modern photography, sharp HD clarity, oversaturated colors, neon lighting, CGI, digital rendering, 3D look, contemporary clothing, futuristic architecture, glossy textures, modern cityscapes, lens flares, text overlays, logos, cartoon style, anime, illustration, HDR, unrealistic proportions, modern makeup, selfie, cell phone, digital camera artifacts, modern fashion, contemporary furniture, computer-generated backgrounds"
   },
   
   style3: {
     image: "stile3.png",
-    name: "Quadro impressionista",
-    positivePrompt: "impressionist style, soft brush strokes, vibrant colors, natural light",
-    negativePrompt: "sharp, defined edges, digital"
+    name: "Orientale",
+    positivePrompt: " A majestic design blending Persian and Egyptian elements. Rich Persian geometric patterns, arabesque motifs, intricate mosaics, and ornate calligraphy interwoven with Egyptian lotus columns, hieroglyphic friezes, and gilded accents. Flowing drapery, patterned textiles, carved stone details, and brass or gold ornamentation. Harmonious fusion of ancient Middle Eastern opulence with North African grandeur, evoking an exotic, timeless, cinematic aesthetic. Warm tones of gold, deep red, lapis lazuli, and turquoise, lit with soft mystical light, as if from an ancient legend or silent film stage set.",
+    negativePrompt: "modern elements, contemporary design, minimalism, plastic, neon, digital screens, futuristic or sci-fi themes, cyberpunk, steampunk, anime, cartoon, comic style, CGI look, HDR effects, modern clothing, streetwear, casual furniture, industrial aesthetics, clutter, distortions, unrealistic anatomy, exaggerated fantasy features, text overlays, watermarks, logos."
   },
   
   style4: {
-    image: "stile4.jpg",
-    name: "Cartone animato",
-    positivePrompt: "cartoon style, bold outlines, bright colors, exaggerated features",
-    negativePrompt: "realistic, photorealistic, dark, gritty"
+    image: "stile4.png",
+    name: "Poster drammatico",
+    positivePrompt: " art nouveau poster of a movie, poster style illustration, dramatic lighting, vintage 800 aesthetic",
+    negativePrompt: "modern photography, sharp HD clarity, oversaturated colors, neon lighting, CGI, digital rendering, 3D look, contemporary clothing, futuristic architecture, glossy textures, modern cityscapes, lens flares, text overlays, logos, cartoon style, anime, illustration, HDR, unrealistic proportions, modern makeup, selfie, cell phone, digital camera artifacts, modern fashion, contemporary furniture, computer-generated backgrounds"
   },
   
   style5: {
     image: "stile5.png", 
-    name: "Quadro ad acquerello",
+    name: "Cabiria",
     positivePrompt: "watercolor, soft washes, delicate details, nature scenes",
     negativePrompt: "oil painting, thick paint, heavy brushstrokes"
   },
   
   style6: {
     image: "stile6.png",
-    name: "Illstrazione giapponese", 
+    name: "Illustrazione giapponese", 
     positivePrompt: "japanese painting style",
     negativePrompt: "realistic, photorealistic, curved lines"
   },
   
   style7: {
     image: "stile7.png",
-    name: "Quadro Astratto",
-    positivePrompt: "kandinsky style, abstract shapes, vibrant colors, geometric patterns", 
-    negativePrompt: "realistic, figurative, photorealistic"
+    name: "Arena romana",
+    positivePrompt: "ancient roman arena, dramatic, film grain", 
+    negativePrompt: "statue, marble"
   },
   
   style8: {
@@ -110,9 +110,9 @@ export const STYLE_CONFIG = {
   
   style12: {
     image: "stile12.png", 
-    name: "Steampunk",
-    positivePrompt: "steampunk style, intricate details, Victorian aesthetics, machinery, gears",
-    negativePrompt: "modern, minimalistic, flat design"
+    name: "Eruzione vulcanica",
+    positivePrompt: "vulcanic lava eruption in an ancient city, columns collapsing with a volcano erupting in the background",
+    negativePrompt: "close up"
   }
 };
 

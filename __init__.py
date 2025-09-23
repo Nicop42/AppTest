@@ -41,6 +41,11 @@ def dungeon_index(request):
 def mondi_cabiria(request):
     return web.FileResponse(os.path.join(WEBROOT, "mondi-cabiria.html"))
 
+# Serve nuovo-cabiria.html at /nuovo-cabiria.html
+@server.PromptServer.instance.routes.get("/nuovo-cabiria.html")
+def nuovo_cabiria(request):
+    return web.FileResponse(os.path.join(WEBROOT, "nuovo-cabiria.html"))
+
 # ✅ AGGIUNTO: Supporto per percorsi originali /test/
 server.PromptServer.instance.routes.static("/test/css/", path=os.path.join(WEBROOT, "css"))
 server.PromptServer.instance.routes.static("/test/js/", path=os.path.join(WEBROOT, "js"))

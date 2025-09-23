@@ -6,7 +6,7 @@ export class APIClient {
     this.clientId = clientId;
     this.cachedWorkflow = null;
     this.cachedImg2ImgWorkflow = null;
-    this.HIDDEN_NEGATIVE_PROMPT = "nsfw, nudity, naked, explicit, adult content, violence, gore, disturbing content, low quality, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry, artist name, bad anatomy, bad proportions, extra limbs, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, ugly";
+    this.HIDDEN_NEGATIVE_PROMPT = "nipples, vagina, tits, nsfw, nudity, naked, explicit, adult content, violence, gore, disturbing content, low quality, bad anatomy, bad hands, text, error, missing fingers, extra digit, fewer digits, cropped, worst quality, low quality, normal quality, jpeg artifacts, signature, watermark, username, blurry, artist name, bad anatomy, bad proportions, extra limbs, extra fingers, mutated hands, poorly drawn hands, poorly drawn face, mutation, deformed, ugly";
     
     this.FORBIDDEN_WORDS = [
       "nsfw", "nudity", "naked", "explicit", "porn", "pornography", "sex", "sexual",
@@ -14,7 +14,7 @@ export class APIClient {
       "hate", "hateful", "racist", "racism", "nazi", "terrorist", "terrorism",
       "illegal", "drug", "drugs", "cocaine", "heroin", "meth", "crack",
       "weapon", "gun", "knife", "bomb", "explosive",
-      "copyrighted", "trademarked", "watermark", "signature"
+      "copyrighted", "trademarked", "watermark", "signature", "vagina"
     ];
   }
 

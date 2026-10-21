@@ -1,204 +1,217 @@
 # Prompting Heritage
 
-Prompting Heritage è un'applicazione web pensata per un contesto museale. Racconta il cinema muto italiano, e in particolare *Cabiria* (1914) e l'immaginario orientalista, e permette ai visitatori di **creare immagini con l'intelligenza artificiale** (Stable Diffusion XL). Si può partire da una descrizione testuale oppure da una foto: scattata sul momento, scelta dalla galleria del telefono o presa dall'archivio del museo.
+Prompting Heritage is a web application built for a museum setting. It tells the story of Italian silent cinema, in particular *Cabiria* (1914) and its Orientalist imagery, and lets visitors **create images with artificial intelligence** (Stable Diffusion XL). A visitor can start from a text description or from a photo: one taken on the spot, one chosen from the phone's gallery, or one from the museum archive.
 
-L'applicazione **non ha un backend autonomo**. È un'**estensione di [ComfyUI](https://github.com/comfyanonymous/ComfyUI)** (una cartella dentro `ComfyUI/custom_nodes/`): ComfyUI la carica all'avvio, ne serve le pagine web e ne esegue i workflow di generazione.
+The application **has no standalone backend**. It is a **[ComfyUI](https://github.com/comfyanonymous/ComfyUI) extension** (a folder inside `ComfyUI/custom_nodes/`): ComfyUI loads it at startup, serves its web pages and runs its generation workflows.
 
 ---
 
-## 1. Architettura in breve
+## 1. Architecture at a glance
 
 ```
- Browser del visitatore (smartphone)                     Server ComfyUI (GPU)
+ Visitor's browser (smartphone)                          ComfyUI server (GPU)
  ┌──────────────────────────────────┐                   ┌─────────────────────────────────────┐
- │ landing.html / pagine editoriali │ ── GET pagine ──▶ │ __init__.py (questa estensione)      │
- │ generator.html + js/*.js         │                   │  • serve web/ su /prompting-heritage │
- │                                  │ ─ POST /upload/image ─▶  • salva la foto in ComfyUI/input │
- │  1. carica workflow JSON         │                   │                                     │
- │  2. lo personalizza (prompt,     │ ─ POST /prompt ──▶│ ComfyUI: mette in coda ed esegue    │
- │     seed, formato, immagine)     │                   │ il workflow SDXL                    │
- │  3. ascolta il progresso         │ ◀── WebSocket /ws ─│ eventi progress / executing /       │
- │                                  │                   │ executed                            │
- │  4. mostra il risultato          │ ── GET /output/… ─▶│ immagine salvata in ComfyUI/output  │
+ │ landing.html / editorial pages   │ ── GET pages ───▶ │ __init__.py (this extension)         │
+ │ generator.html + js/*.js         │                   │  • serves web/ at /prompting-heritage│
+ │                                  │ ─ POST /upload/image ─▶  • saves the photo to ComfyUI/input│
+ │  1. load workflow JSON           │                   │                                     │
+ │  2. customize it (prompt,        │ ─ POST /prompt ──▶│ ComfyUI: queues and runs            │
+ │     seed, format, image)         │                   │ the SDXL workflow                   │
+ │  3. listen for progress          │ ◀── WebSocket /ws ─│ progress / executing / executed     │
+ │                                  │                   │ events                              │
+ │  4. show the result              │ ── GET /output/… ─▶│ image saved in ComfyUI/output       │
  └──────────────────────────────────┘                   └─────────────────────────────────────┘
 ```
 
-Il "cervello" dell'applicazione sta nel **front end**: il browser carica un workflow ComfyUI in formato JSON (un grafo di nodi), sostituisce nei nodi giusti prompt, seed, dimensioni e immagine di partenza, e lo invia a ComfyUI. Il server Python serve soprattutto i file statici.
+The application's logic lives in the **front end**: the browser loads a ComfyUI workflow in JSON format (a graph of nodes), writes the prompt, seed, dimensions and source image into the right nodes, and sends it to ComfyUI. The Python server mostly serves static files.
 
 ---
 
-## 2. Struttura del progetto
+## 2. Project structure
 
 ```
-AppTest-master/                    ← cartella dell'estensione dentro ComfyUI/custom_nodes/
-├── __init__.py                    ← estensione ComfyUI: route HTTP e file statici
+AppTest-master/                    ← extension folder inside ComfyUI/custom_nodes/
+├── __init__.py                    ← ComfyUI extension: HTTP routes and static files
 ├── README.md
-├── legacy/                        ← codice non più usato, conservato per riferimento (non servito)
-│   ├── standaloneApp.js           ←   vecchia versione monolitica del front end (ex dungeon.js)
-│   ├── debugArchiveCarousel.js    ←   script di debug da console (ex force_update_test.js)
-│   ├── node_mappings_stub.py      ←   stub vuoto duplicato di __init__.py (ex dungeon.py)
-│   └── empty.css                  ←   foglio di stile vuoto (ex page.css)
+├── legacy/                        ← code no longer used, kept for reference (not served)
+│   ├── standaloneApp.js           ←   old monolithic front end (formerly dungeon.js)
+│   ├── debugArchiveCarousel.js    ←   browser-console debug script (formerly force_update_test.js)
+│   ├── node_mappings_stub.py      ←   empty stub duplicating __init__.py (formerly dungeon.py)
+│   └── empty.css                  ←   empty stylesheet (formerly page.css)
 └── web/
-    ├── landing.html               ← pagina iniziale (logo, due percorsi editoriali, "Crea la tua immagine")
-    ├── distant-worlds-in-cabiria.html  ← "I mondi lontani in Cabiria": testo su orientalismo e Cabiria
-    ├── distant-worlds-today.html  ← "I mondi lontani oggi": pagina segnaposto
-    ├── generator.html             ← il generatore di immagini (cuore dell'app)
-    ├── css/main.css               ← stili comuni a tutte le pagine
-    ├── js/                        ← moduli ES del generatore (vedi §4)
-    ├── workflows/                 ← workflow ComfyUI in formato API (vedi §5)
+    ├── landing.html               ← home page (logo, two editorial paths, "Crea la tua immagine")
+    ├── distant-worlds-in-cabiria.html  ← "I mondi lontani in Cabiria": text on Orientalism and Cabiria
+    ├── distant-worlds-today.html  ← "I mondi lontani oggi": placeholder page
+    ├── generator.html             ← the image generator (core of the app)
+    ├── css/main.css               ← styles shared by all pages
+    ├── js/                        ← generator ES modules (see §4)
+    ├── workflows/                 ← ComfyUI workflows in API format (see §5)
     └── images/
         ├── logo.png
-        ├── styles/                ← miniature dei preset di stile
-        ├── archive/               ← fotogrammi di Cabiria usabili come immagine di partenza
-        └── content/               ← immagini delle pagine editoriali
+        ├── styles/                ← style preset thumbnails
+        ├── archive/               ← Cabiria stills usable as the source image
+        └── content/               ← images for the editorial pages
 ```
 
 ---
 
 ## 3. Server: `__init__.py`
 
-ComfyUI importa ogni pacchetto in `custom_nodes/` e richiede che esponga `NODE_CLASS_MAPPINGS` e `NODE_DISPLAY_NAME_MAPPINGS`. Qui sono dizionari vuoti, perché l'estensione non aggiunge nodi. Al momento dell'import, il modulo registra delle route sul server aiohttp di ComfyUI (`server.PromptServer.instance`).
+ComfyUI imports every package in `custom_nodes/` and requires it to expose `NODE_CLASS_MAPPINGS` and `NODE_DISPLAY_NAME_MAPPINGS`. Here they are empty dictionaries, because the extension adds no nodes. On import, the module registers routes on ComfyUI's aiohttp server (`server.PromptServer.instance`).
 
-### Pagine e file statici
+> The file cannot be run on its own (for example with "Run" in VS Code): it depends on the `server` module, which only exists inside ComfyUI.
 
-| URL | Contenuto |
+### Pages and static files
+
+| URL | Content |
 |---|---|
-| `/prompting-heritage` | redirect a `/prompting-heritage/` |
+| `/prompting-heritage` | redirect to `/prompting-heritage/` |
 | `/prompting-heritage/` | `landing.html` |
-| `/prompting-heritage/generator.html` | generatore |
-| `/prompting-heritage/distant-worlds-in-cabiria.html` | pagina editoriale |
-| `/prompting-heritage/distant-worlds-today.html` | pagina editoriale |
-| `/prompting-heritage/{css,js,images,workflows}/…` | file statici da `web/` |
-| `/output/…` | cartella `ComfyUI/output` (immagini generate) |
+| `/prompting-heritage/generator.html` | generator |
+| `/prompting-heritage/distant-worlds-in-cabiria.html` | editorial page |
+| `/prompting-heritage/distant-worlds-today.html` | editorial page |
+| `/prompting-heritage/{css,js,images,workflows}/…` | static files from `web/` |
+| `/output/…` | the `ComfyUI/output` folder (generated images) |
 
-Tutte le pagine usano **percorsi relativi** (`css/main.css`, `generator.html`…). Per questo funzionano sia sotto ComfyUI sia con un semplice server statico (`npx http-server ./web`, task VS Code *Start Prompting Heritage static preview server*). In quella modalità si vedono solo le pagine, senza generazione.
+All pages use **relative paths** (`css/main.css`, `generator.html`…). That is why they work both under ComfyUI and with a plain static server (`npx http-server ./web`, VS Code task *Start Prompting Heritage static preview server*). In that mode only the pages are available, without generation.
 
-**URL storici.** `/test`, `/test/index.html`, `/mondi-cabiria.html` e `/nuovo-cabiria.html` rispondono con un redirect permanente (301) ai nuovi indirizzi, così link e QR code già distribuiti continuano a funzionare.
+**Legacy URLs.** `/test`, `/test/index.html`, `/mondi-cabiria.html` and `/nuovo-cabiria.html` return a permanent redirect (301) to the new addresses, so links and QR codes already handed out keep working.
 
-### Endpoint API
+### API endpoints
 
-| Endpoint | Cosa fa |
+| Endpoint | What it does |
 |---|---|
-| `POST /upload/image` | Riceve un file multipart nel campo `image`, lo salva in `ComfyUI/input` con un prefisso UUID e risponde `{name, subfolder, type}`. |
-| `POST /prompt` | Legge il workflow inviato e scrive un file `<timestamp>_prompt.txt` con prompt positivo, negativo e seed accanto all'immagine. |
-| `GET /history?client_id=…` | Elenca le immagini della cartella di sessione del client. |
-| middleware CORS | Aggiunge `Access-Control-Allow-*` a ogni risposta. |
+| `POST /upload/image` | Receives a multipart file in the `image` field, saves it to `ComfyUI/input` with a UUID prefix and returns `{name, subfolder, type}`. |
+| `POST /prompt` | Reads the submitted workflow and writes a `<timestamp>_prompt.txt` file with the positive prompt, negative prompt and seed next to the image. |
+| `GET /history?client_id=…` | Lists the images in the client's session folder. |
+| CORS middleware | Adds `Access-Control-Allow-*` headers to every response. |
 
-> ⚠️ **Nota importante su `/prompt`, `/history` e `/upload/image`.** ComfyUI registra già route con lo stesso metodo e percorso, e lo fa *prima* delle estensioni. aiohttp usa la prima route che corrisponde, quindi con ogni probabilità questi tre handler **non vengono mai eseguiti**: la generazione funziona proprio perché risponde il `/prompt` nativo di ComfyUI. L'handler di questa estensione si limiterebbe a restituire `{"status": "accepted"}` senza mettere in coda nulla. In pratica i file `_prompt.txt` non vengono scritti. Se servono, conviene spostare questi endpoint su percorsi propri, per esempio `/prompting-heritage/api/...`.
-
----
-
-## 4. Front end del generatore (`web/js/`)
-
-`generator.html` carica Bootstrap 5, Swiper 11 e il modulo `js/app.js`, che crea e collega tutti gli altri moduli.
-
-| Modulo | Classe / export | Responsabilità |
-|---|---|---|
-| `app.js` | `App` | Punto d'ingresso. Genera un `clientId` (UUID) per la sessione del browser, istanzia i moduli, collega i callback e avvia il carosello dell'archivio. Espone l'istanza come `window.app`. |
-| `comfyUIClient.js` | `ComfyUIClient`, `WORKFLOW_NODES` | Dialogo HTTP con ComfyUI: carica i workflow JSON (con cache), applica le impostazioni, filtra le parole vietate, aggiunge il prompt negativo nascosto, carica l'immagine (`/upload/image`) e invia il job (`/prompt`). |
-| `comfyUISocket.js` | `ComfyUISocket` | WebSocket `/ws?clientId=…`. Smista i messaggi `progress`, `executing` ed `executed` all'`ImageGenerator`. Se la connessione cade, si riconnette dopo 5 s. |
-| `imageGenerator.js` | `ImageGenerator` | Gestisce l'intera generazione: sceglie la modalità text-to-image o image-to-image, gestisce la barra di avanzamento, mostra il risultato, sposta l'immagine precedente nella galleria e offre il pulsante "Riusa". |
-| `settingsManager.js` | `SettingsManager` | Gestisce la modale **Impostazioni**: seed personalizzato, formato (verticale, orizzontale, quadrato), qualità e definizione. |
-| `styleManager.js` | `StyleManager` | Genera le miniature degli stili da `styleConfig.js` e, alla selezione, aggiunge o toglie dai campi di testo i prompt positivo e negativo dello stile. |
-| `styleConfig.js` | `STYLE_PRESETS`, `STYLE_LAYOUT` | Configurazione dei preset di stile (immagine, etichetta, prompt) e della loro disposizione (sezione principale o "Scopri altri stili"). |
-| `referenceImageManager.js` | `ReferenceImageManager` | Modale **Utilizza una tua foto**: scatto con la fotocamera, scelta dal dispositivo o selezione dall'archivio. Valida il file (JPG/PNG, max 50 MB), mostra l'anteprima e prepara l'immagine per l'upload. |
-| `archiveConfig.js` | `ARCHIVE_IMAGES`, `getSortedArchiveImages()` | Elenco delle immagini d'archivio (file, didascalia, ordine). |
-| `archiveCarousel.js` | `initializeArchiveCarousel()`… | Costruisce le slide del carosello Swiper a partire da `archiveConfig.js`. |
-| `utils.js` | `DOMUtils`, `generateUUID` | Funzioni di supporto: selettori, seed casuale, `mapRange`, creazione dell'elemento immagine con i pulsanti Salva/Riusa (con un nuovo tentativo di caricamento dopo 3 s), toast. |
-
-### 4.1 Flusso di una generazione
-
-1. **Composizione del prompt.** Il visitatore scrive il *Positive Prompt* ("cosa vuoi inserire") e, se vuole, il *Negative Prompt* ("cosa vuoi escludere"). Ogni stile selezionato aggiunge in coda ai due campi i propri testi, separati da virgola. Deselezionandolo, quei testi vengono rimossi.
-2. **Immagine di partenza (facoltativa).** Se il visitatore applica una foto o un'immagine d'archivio, `ReferenceImageManager.prepareImageForUpload()` la ridimensiona su un canvas (lato lungo 512 px, multipli di 8, JPEG all'75 %) e ricorda le dimensioni originali. Da quel momento **ogni generazione è image-to-image**, finché non si preme *Reset* nella modale. Le immagini d'archivio vengono applicate subito al clic, e la modale si chiude.
-3. **Clic su "Genera"** (`ImageGenerator.handleGenerate()`):
-   - in modalità image-to-image, l'immagine viene caricata con `POST /upload/image` e ComfyUI restituisce il nome del file nella sua cartella `input`;
-   - le impostazioni della modale vengono lette (`SettingsManager.getSettings()` / `getDimensions()`);
-   - `ComfyUIClient.getWorkflowWithSettings()` carica `workflows/text-to-image.json` oppure `workflows/image-to-image.json` e scrive i valori nei nodi (vedi §5);
-   - `ComfyUIClient.updateWorkflowPrompts()` filtra le parole vietate, inserisce i prompt e imposta `filename_prefix = prompting-heritage/session_<primi 8 caratteri del clientId>/<timestamp>`;
-   - i parametri completi vengono salvati in una coda interna, per la galleria e per "Riusa";
-   - il workflow viene inviato con `POST /prompt` insieme al `client_id`.
-4. **Avanzamento.** ComfyUI invia sul WebSocket gli eventi `progress` (passi del sampler), con cui si aggiorna la barra. In image-to-image anche gli eventi `executing` fanno avanzare la percentuale, con pesi diversi per fase: pre-elaborazione 30 %, campionamento 60 %, post-elaborazione 10 %.
-5. **Risultato.** Ogni evento `executed` che contiene immagini mostra le immagini indicate, prese da `/output/<subfolder>/<filename>`. Il pulsante *Salva* compare quando l'immagine si è caricata, oppure dopo un timeout di 15 s in text-to-image e 30 s in image-to-image.
-6. **Galleria.** Alla generazione successiva, l'immagine corrente passa nella sezione *Immagini precedenti* insieme a modalità e prompt, e compare un avviso (toast). Nella galleria ogni immagine ha anche **Riusa**, che reimposta nel form prompt, seed (fissato come seed personalizzato), qualità, definizione e formato, e prova a recuperare dal server l'immagine di partenza.
-
-### 4.2 Significato delle impostazioni
-
-| Controllo UI | Valore di default | Parametro reale del workflow |
-|---|---|---|
-| *Usa Seed personalizzato* | disattivo (seed casuale) | `KSampler.seed` |
-| *Formato immagine* | quadrata | text-to-image: `EmptyLatentImage` 1024×1024, 1024×1820 (verticale) o 1820×1024 (orizzontale). Image-to-image: dimensioni di condizionamento SDXL nei nodi prompt; la risoluzione effettiva segue le proporzioni della foto, con il lato corto a 1024 px |
-| *Qualità immagine* (slider 0–150) | 15 | `KSampler.steps` = 5 + (valore/150)·25, quindi 5–30 passi (default ≈ 8) |
-| *Definizione immagine* (slider 0–150) | 75 | `KSampler.cfg` mappato linearmente su 0,5–3,0 (default ≈ 1,8). È la "guidance", cioè quanto l'immagine aderisce al prompt |
-
-### 4.3 Filtri sui contenuti
-
-- `FORBIDDEN_WORDS` (in `comfyUIClient.js`): le parole presenti in questo elenco vengono **rimosse** dai due prompt prima dell'invio, e il campo di testo viene aggiornato.
-- `HIDDEN_NEGATIVE_PROMPT`: un lungo prompt negativo (contenuti espliciti o violenti, artefatti, anatomia errata, filigrane…) viene **sempre aggiunto** al negativo dell'utente.
-- Entrambi i filtri girano **nel browser**: proteggono dall'uso ingenuo, ma non da chi invia richieste dirette a ComfyUI.
+> ⚠️ **Important note on `/prompt`, `/history` and `/upload/image`.** ComfyUI already registers routes with the same method and path, and does so *before* extensions. aiohttp uses the first matching route, so these three handlers are most likely **never executed**: generation works precisely because ComfyUI's built-in `/prompt` responds. This extension's handler would only return `{"status": "accepted"}` without queuing anything. In practice the `_prompt.txt` files are not written. If they are needed, these endpoints should move to their own paths, for example `/prompting-heritage/api/...`.
 
 ---
 
-## 5. Workflow ComfyUI (`web/workflows/`)
+## 4. Generator front end (`web/js/`)
 
-I file sono esportati da ComfyUI in **formato API**: un oggetto `{ idNodo: { class_type, inputs } }`. Il codice modifica i nodi tramite gli ID raccolti in `WORKFLOW_NODES` (`comfyUIClient.js`). **Se si riesporta un workflow, gli ID dei nodi devono restare gli stessi.**
+`generator.html` loads Bootstrap 5, Swiper 11 and the `js/app.js` module, which creates and wires together all the other modules.
 
-| Costante | ID | Nodo |
+| Module | Class / export | Responsibility |
+|---|---|---|
+| `app.js` | `App` | Entry point. Generates a `clientId` (UUID) for the browser session, instantiates the modules, connects the callbacks and starts the archive carousel. Exposes the instance as `window.app`. |
+| `comfyUIClient.js` | `ComfyUIClient`, `WORKFLOW_NODES` | HTTP communication with ComfyUI: loads the JSON workflows (cached), applies the settings, filters forbidden words, appends the hidden negative prompt, uploads the image (`/upload/image`) and submits the job (`/prompt`). |
+| `comfyUISocket.js` | `ComfyUISocket` | WebSocket `/ws?clientId=…`. Routes `progress`, `executing` and `executed` messages to the `ImageGenerator`. Reconnects after 5 s if the connection drops. |
+| `imageGenerator.js` | `ImageGenerator` | Runs a whole generation: chooses text-to-image or image-to-image mode, drives the progress bar, shows the result, moves the previous image to the gallery and provides the "Riusa" (reuse) button. |
+| `settingsManager.js` | `SettingsManager` | Handles the **Impostazioni** (settings) modal: custom seed, format (portrait, landscape, square), quality and definition. |
+| `styleManager.js` | `StyleManager` | Builds the style thumbnails from `styleConfig.js` and, on selection, adds or removes the style's positive and negative prompts in the text fields. |
+| `styleConfig.js` | `STYLE_PRESETS`, `STYLE_LAYOUT` | Configuration of the style presets (image, label, prompts) and their layout (main section or "Scopri altri stili", i.e. more styles). |
+| `referenceImageManager.js` | `ReferenceImageManager` | The **Utilizza una tua foto** (use your own photo) modal: camera capture, file from the device or selection from the archive. Validates the file (JPG/PNG, max 50 MB), shows the preview and prepares the image for upload. |
+| `archiveConfig.js` | `ARCHIVE_IMAGES`, `getSortedArchiveImages()` | List of archive images (file, caption, order). |
+| `archiveCarousel.js` | `initializeArchiveCarousel()`… | Builds the Swiper carousel slides from `archiveConfig.js`. |
+| `utils.js` | `DOMUtils`, `generateUUID` | Helpers: selectors, random seed, `mapRange`, creation of the image element with the Salva/Riusa (save/reuse) buttons (with one reload retry after 3 s), toast. |
+
+### 4.1 Generation flow
+
+1. **Composing the prompt.** The visitor writes the *Positive Prompt* (what to include) and, optionally, the *Negative Prompt* (what to exclude). Each selected style appends its own text to both fields, separated by a comma. Deselecting the style removes that text.
+2. **Source image (optional).** When the visitor applies a photo or an archive image, `ReferenceImageManager.prepareImageForUpload()` resizes it on a canvas (long side 512 px, multiples of 8, JPEG at 75%) and keeps the original dimensions. From then on **every generation is image-to-image**, until *Reset* is pressed in the modal. Archive images are applied immediately on click, and the modal closes.
+3. **Clicking "Genera"** (`ImageGenerator.handleGenerate()`):
+   - in image-to-image mode, the image is uploaded with `POST /upload/image` and ComfyUI returns the file name in its `input` folder;
+   - the modal settings are read (`SettingsManager.getSettings()` / `getDimensions()`);
+   - `ComfyUIClient.getWorkflowWithSettings()` loads `workflows/text-to-image.json` or `workflows/image-to-image.json` and writes the values into the nodes (see §5);
+   - `ComfyUIClient.updateWorkflowPrompts()` filters forbidden words, inserts the prompts and sets `filename_prefix = prompting-heritage/session_<first 8 characters of clientId>/<timestamp>`;
+   - the full parameters are stored in an internal queue, for the gallery and for "Riusa";
+   - the workflow is submitted with `POST /prompt` together with the `client_id`.
+4. **Progress.** ComfyUI sends `progress` events (sampler steps) over the WebSocket, which update the bar. In image-to-image mode, `executing` events also advance the percentage, with a different weight per phase: preprocessing 30%, sampling 60%, postprocessing 10%.
+5. **Result.** Every `executed` event that contains images displays those images, loaded from `/output/<subfolder>/<filename>`. The *Salva* (save) button appears once the image has loaded, or after a timeout of 15 s in text-to-image and 30 s in image-to-image.
+6. **Gallery.** On the next generation, the current image moves to the *Immagini precedenti* (previous images) section together with its mode and prompts, and a toast notification appears. In the gallery each image also has **Riusa**, which restores the prompts, seed (pinned as a custom seed), quality, definition and format in the form, and tries to fetch the source image back from the server.
+
+### 4.2 What the settings mean
+
+| UI control | Default | Actual workflow parameter |
+|---|---|---|
+| *Usa Seed personalizzato* (custom seed) | off (random seed) | `KSampler.seed` |
+| *Formato immagine* (format) | square | text-to-image: `EmptyLatentImage` 1024×1024, 1024×1820 (portrait) or 1820×1024 (landscape). Image-to-image: SDXL conditioning size in the prompt nodes; the actual resolution follows the photo's aspect ratio, with the short side at 1024 px |
+| *Qualità immagine* (quality, slider 0–150) | 15 | `KSampler.steps` = 5 + (value/150)·25, i.e. 5–30 steps (default ≈ 8) |
+| *Definizione immagine* (definition, slider 0–150) | 75 | `KSampler.cfg` mapped linearly to 0.5–3.0 (default ≈ 1.8). This is the guidance, i.e. how closely the image follows the prompt |
+
+### 4.3 Content filters
+
+- `FORBIDDEN_WORDS` (in `comfyUIClient.js`): words in this list are **removed** from both prompts before submission, and the text field is updated.
+- `HIDDEN_NEGATIVE_PROMPT`: a long negative prompt (explicit or violent content, artifacts, bad anatomy, watermarks…) is **always appended** to the user's negative prompt.
+- Both filters run **in the browser**: they guard against casual misuse, but not against someone sending requests directly to ComfyUI.
+
+---
+
+## 5. ComfyUI workflows (`web/workflows/`)
+
+The files are exported from ComfyUI in **API format**: an object `{ nodeId: { class_type, inputs } }`. The code edits nodes through the IDs collected in `WORKFLOW_NODES` (`comfyUIClient.js`). **When re-exporting a workflow, the node IDs must stay the same.**
+
+| Constant | ID | Node |
 |---|---|---|
 | `SAMPLER` | 3 | `KSampler`: seed, steps, cfg |
-| `EMPTY_LATENT_IMAGE` | 5 | `EmptyLatentImage`, dimensioni (solo text-to-image) |
+| `EMPTY_LATENT_IMAGE` | 5 | `EmptyLatentImage`, dimensions (text-to-image only) |
 | `SAVE_IMAGE` | 28 | `SaveImage`, `filename_prefix` |
 | `POSITIVE_PROMPT` / `NEGATIVE_PROMPT` | 30 / 33 | `CLIPTextEncodeSDXL` |
-| `LORA_LOADER` | 63 | `LoraLoader`: il codice accetta solo `MJ52_v2.0.safetensors` |
-| `LOAD_IMAGE` | 65 | `LoadImage` (solo image-to-image) |
-| `IMAGE_SCALE` | 76 | non presente nei workflow attuali; il codice lo gestisce se esiste |
-| `IMAGE_RESIZE` | 94 | `Image Resize`, ridimensionamento proporzionale (solo image-to-image) |
+| `LORA_LOADER` | 63 | `LoraLoader`: the code only accepts `MJ52_v2.0.safetensors` |
+| `LOAD_IMAGE` | 65 | `LoadImage` (image-to-image only) |
+| `IMAGE_SCALE` | 76 | not present in the current workflows; handled by the code if it exists |
+| `IMAGE_RESIZE` | 94 | `Image Resize`, proportional resize (image-to-image only) |
 
-**`text-to-image.json`** (usato). Checkpoint `dreamshaperXL_v21TurboDPMSDE` (SDXL Turbo, pochi passi), LoRA `MJ52_v2.0` (model 0,6 / clip 0,3), VAE `sdxl_vae`, sampler `dpmpp_2m_sde` con scheduler `exponential`. Dopo la decodifica, il volto viene restaurato con GFPGAN 1.4 (`FaceRestoreCFWithModel`) prima del salvataggio.
+**`text-to-image.json`** (in use). Checkpoint `dreamshaperXL_v21TurboDPMSDE` (SDXL Turbo, few steps), LoRA `MJ52_v2.0` (model 0.6 / clip 0.3), VAE `sdxl_vae`, sampler `dpmpp_2m_sde` with the `exponential` scheduler. After decoding, faces are restored with GFPGAN 1.4 (`FaceRestoreCFWithModel`) before saving.
 
-**`image-to-image.json`** (usato). Stesso checkpoint, LoRA e VAE. L'immagine caricata viene ridimensionata (nodo 94) e codificata nel latente (`VAEEncode`, denoise 0,95), quindi la composizione cambia molto. Da essa si ricavano anche una **mappa di profondità** (MiDaS) e una **posa** (DWPose), applicate in cascata con un unico ControlNet SDXL "union/promax" (forza 0,7 e 0,65). In questo modo la nuova immagine conserva struttura e pose della foto originale. Il nodo di face restore è presente ma non collegato al salvataggio, quindi in questa modalità non viene usato.
+**`image-to-image.json`** (in use). Same checkpoint, LoRA and VAE. The uploaded image is resized (node 94) and encoded into the latent (`VAEEncode`, denoise 0.95), so the composition changes substantially. A **depth map** (MiDaS) and a **pose** (DWPose) are also extracted from it and applied in sequence through a single SDXL "union/promax" ControlNet (strength 0.7 and 0.65). This way the new image keeps the structure and poses of the original photo. The face-restore node is present but not connected to the save node, so it is not used in this mode.
 
-**`*-cabiria-lora.json`** (non usati dal codice). Varianti con la LoRA `MovieMaticCabiria (CabiriaMovieStyle)`. Quella image-to-image usa SDXL base, 40 passi, profondità Marigold e upscaler 4x. Sono pronte per un eventuale "stile Cabiria" vero e proprio.
+**`*-cabiria-lora.json`** (not used by the code). Variants with the `MovieMaticCabiria (CabiriaMovieStyle)` LoRA. The image-to-image one uses SDXL base, 40 steps, Marigold depth and a 4x upscaler. They are ready for a proper "Cabiria style" in the future.
 
-**Modelli necessari in ComfyUI.** `dreamshaperXL_v21TurboDPMSDE.safetensors`, `sdxl_vae.safetensors`, `MJ52_v2.0.safetensors`, `GFPGANv1.4.pth`, `diffusion_pytorch_model_promax.safetensors` (ControlNet), più i custom node che forniscono `FaceRestoreCFWithModel`, `Image Resize`, `MiDaS-DepthMapPreprocessor` e `DWPreprocessor` (per esempio *comfyui_controlnet_aux*, *facerestore_cf*, *WAS Node Suite*).
-
----
-
-## 6. Personalizzazione
-
-- **Aggiungere o modificare uno stile.** Copiare la miniatura in `web/images/styles/`, aggiungere una voce in `STYLE_PRESETS` (`styleConfig.js`) e inserirne la chiave in `STYLE_LAYOUT.primaryStyles` o in `STYLE_LAYOUT.moreStyles`.
-- **Aggiungere un'immagine d'archivio.** Copiarla in `web/images/archive/` e aggiungere una voce in `ARCHIVE_IMAGES` (`archiveConfig.js`), indicando la didascalia e la posizione (`order`).
-- **Cambiare il modello o i parametri fissi.** Modificare il workflow in ComfyUI, riesportarlo in formato API mantenendo gli ID dei nodi e sostituire il file in `web/workflows/`.
+**Models required in ComfyUI.** `dreamshaperXL_v21TurboDPMSDE.safetensors`, `sdxl_vae.safetensors`, `MJ52_v2.0.safetensors`, `GFPGANv1.4.pth`, `diffusion_pytorch_model_promax.safetensors` (ControlNet), plus the custom nodes providing `FaceRestoreCFWithModel`, `Image Resize`, `MiDaS-DepthMapPreprocessor` and `DWPreprocessor` (for example *comfyui_controlnet_aux*, *facerestore_cf*, *WAS Node Suite*).
 
 ---
 
-## 7. Rinomina effettuata (vecchio → nuovo)
+## 6. Running the application
 
-Il codice è stato uniformato in inglese, con nomi che descrivono il contenuto. **I testi visibili ai visitatori sono rimasti in italiano.**
+1. Place the project folder inside `ComfyUI/custom_nodes/`.
+2. Start ComfyUI as usual (in the portable version, `run_nvidia_gpu.bat`).
+3. Check in the ComfyUI console that the extension appears among the loaded custom nodes, without "IMPORT FAILED".
+4. Open `http://127.0.0.1:8188/prompting-heritage/` in the browser.
 
-| Ambito | Prima | Dopo |
+To preview only the pages without ComfyUI, run `npx http-server ./web -p 8080` and open `http://localhost:8080/landing.html`.
+
+---
+
+## 7. Customization
+
+- **Add or change a style.** Copy the thumbnail into `web/images/styles/`, add an entry to `STYLE_PRESETS` (`styleConfig.js`) and add its key to `STYLE_LAYOUT.primaryStyles` or `STYLE_LAYOUT.moreStyles`.
+- **Add an archive image.** Copy it into `web/images/archive/` and add an entry to `ARCHIVE_IMAGES` (`archiveConfig.js`), with its caption and position (`order`).
+- **Change the model or the fixed parameters.** Edit the workflow in ComfyUI, re-export it in API format keeping the node IDs, and replace the file in `web/workflows/`.
+
+---
+
+## 8. Renaming (old → new)
+
+The code has been standardized in English, with names that describe the content. **Visitor-facing text is still in Italian.**
+
+| Area | Before | After |
 |---|---|---|
-| Pagine | `index.html`, `mondi-cabiria.html`, `nuovo-cabiria.html` | `generator.html`, `distant-worlds-in-cabiria.html`, `distant-worlds-today.html` |
-| URL | `/test`, `/test/index.html`, `/mondi-cabiria.html` | `/prompting-heritage/…` (i vecchi URL fanno redirect) |
+| Pages | `index.html`, `mondi-cabiria.html`, `nuovo-cabiria.html` | `generator.html`, `distant-worlds-in-cabiria.html`, `distant-worlds-today.html` |
+| URLs | `/test`, `/test/index.html`, `/mondi-cabiria.html` | `/prompting-heritage/…` (old URLs redirect) |
 | CSS | `dungeon.css` | `main.css` |
-| Moduli JS | `apiClient.js` (`APIClient`), `websocketHandler.js` (`WebSocketHandler`), `photoUpload.js` (`PhotoUpload`), `archivioConfig.js`, `archivioManager.js` | `comfyUIClient.js` (`ComfyUIClient`), `comfyUISocket.js` (`ComfyUISocket`), `referenceImageManager.js` (`ReferenceImageManager`), `archiveConfig.js`, `archiveCarousel.js` |
-| Config | `STYLE_CONFIG`/`DISPLAY_CONFIG`, chiavi `style1…style12`; `ARCHIVIO_CONFIG`, chiavi `archivio1…10` | `STYLE_PRESETS`/`STYLE_LAYOUT`, chiavi descrittive (`silentFilm`, `orientalist`…); `ARCHIVE_IMAGES` (`wedding`, `molochTemple`…) |
-| Workflow | `js/fastSDXLtext2img.json`, `js/fastSDXLimg2img.json`, `js/SDXL*Cabiria.json` | `workflows/text-to-image.json`, `workflows/image-to-image.json`, `workflows/*-cabiria-lora.json` |
-| Immagini | `stile1.png…`, `Archivio1.png…`, `LandingLogo.png`, `MercatoSchiavi.jpg`… | `images/styles/silent-film.png…`, `images/archive/wedding.png…`, `images/logo.png`, `images/content/gerome-slave-market.jpg`… |
-| ID/classi HTML | `#positive`, `#filter`, `#filtersModal`, `#usePhotoModal`, `.stile-block`, `.nome-stile`, `.row-filtro`, `.swiper-archivio`… | `#positive-prompt`, `#open-settings-btn`, `#settings-modal`, `#reference-image-modal`, `.style-card`, `.thumbnail-label`, `.settings-row`, `.archive-swiper`… |
-| Impostazione | `definition` (in realtà CFG) | `guidance` |
-| Output su disco | `ComfyUI/output/gradio/session_xxxxxxxx/` | `ComfyUI/output/prompting-heritage/session_xxxxxxxx/` |
+| JS modules | `apiClient.js` (`APIClient`), `websocketHandler.js` (`WebSocketHandler`), `photoUpload.js` (`PhotoUpload`), `archivioConfig.js`, `archivioManager.js` | `comfyUIClient.js` (`ComfyUIClient`), `comfyUISocket.js` (`ComfyUISocket`), `referenceImageManager.js` (`ReferenceImageManager`), `archiveConfig.js`, `archiveCarousel.js` |
+| Config | `STYLE_CONFIG`/`DISPLAY_CONFIG`, keys `style1…style12`; `ARCHIVIO_CONFIG`, keys `archivio1…10` | `STYLE_PRESETS`/`STYLE_LAYOUT`, descriptive keys (`silentFilm`, `orientalist`…); `ARCHIVE_IMAGES` (`wedding`, `molochTemple`…) |
+| Workflows | `js/fastSDXLtext2img.json`, `js/fastSDXLimg2img.json`, `js/SDXL*Cabiria.json` | `workflows/text-to-image.json`, `workflows/image-to-image.json`, `workflows/*-cabiria-lora.json` |
+| Images | `stile1.png…`, `Archivio1.png…`, `LandingLogo.png`, `MercatoSchiavi.jpg`… | `images/styles/silent-film.png…`, `images/archive/wedding.png…`, `images/logo.png`, `images/content/gerome-slave-market.jpg`… |
+| HTML IDs/classes | `#positive`, `#filter`, `#filtersModal`, `#usePhotoModal`, `.stile-block`, `.nome-stile`, `.row-filtro`, `.swiper-archivio`… | `#positive-prompt`, `#open-settings-btn`, `#settings-modal`, `#reference-image-modal`, `.style-card`, `.thumbnail-label`, `.settings-row`, `.archive-swiper`… |
+| Setting | `definition` (actually CFG) | `guidance` |
+| Output on disk | `ComfyUI/output/gradio/session_xxxxxxxx/` | `ComfyUI/output/prompting-heritage/session_xxxxxxxx/` |
 
-La rinomina dei file immagine ha risolto anche una incoerenza tra maiuscole e minuscole (`Archivio1.png` e `Stile4.png` su disco, contro `archivio1.png` e `stile4.png` nel codice): su Windows non creava problemi, su Linux avrebbe impedito di caricare le immagini.
+Renaming the image files also fixed a letter-case mismatch (`Archivio1.png` and `Stile4.png` on disk versus `archivio1.png` and `stile4.png` in the code): harmless on Windows, but on Linux it would have prevented those images from loading.
 
 ---
 
-## 8. Problemi noti e osservazioni
+## 9. Known issues and notes
 
-1. **Endpoint dell'estensione oscurati da ComfyUI** (`/prompt`, `/history`, `/upload/image`): vedi la nota al §3.
-2. **Anteprima della mappa di profondità.** Nel workflow image-to-image il nodo `PreviewImage` (79) genera anch'esso un evento `executed` con immagini, di tipo `temp`. Il front end lo tratta come un risultato e prova a caricarlo da `/output/`, che non serve la cartella temp, quindi il caricamento fallisce. Il codice evita già di spostare queste immagini nella galleria; la soluzione pulita è eliminare il nodo 79 o ignorare gli eventi che non provengono dal nodo `SAVE_IMAGE`.
-3. **Riconoscimento delle fasi in image-to-image.** `updateNodeExecution()` confronta gli ID dei nodi con `includes()`: per esempio `'3'` corrisponde anche a `'30'`, `'33'` e `'63'`. La percentuale mostrata è quindi indicativa.
-4. Lo stile **"Cabiria"** usa al momento un prompt da acquerello (`watercolor, soft washes…`). Probabilmente è un segnaposto, in attesa della LoRA Cabiria dei workflow `*-cabiria-lora.json`.
-5. `main.css` fa riferimento a `images/image.svg` (icona dei riquadri vuoti), che non esiste nel progetto.
-6. `ReferenceImageManager.restoreImageFromServer()` mostra in un messaggio un percorso fisso di una macchina specifica (`C:\Users\StudiumLab\…`).
-7. Le immagini `images/styles/surrealism.png`, `images/styles/ornate-engraving.png` e `images/content/cabiria-maciste.jpg` non sono usate.
-8. `distant-worlds-today.html` è ancora una pagina segnaposto.
+1. **Extension endpoints shadowed by ComfyUI** (`/prompt`, `/history`, `/upload/image`): see the note in §3.
+2. **Depth-map preview.** In the image-to-image workflow the `PreviewImage` node (79) also emits an `executed` event with images, of type `temp`. The front end treats it as a result and tries to load it from `/output/`, which does not serve the temp folder, so loading fails. The code already avoids moving these images to the gallery; the clean fix is to remove node 79 or to ignore events that do not come from the `SAVE_IMAGE` node.
+3. **Phase detection in image-to-image.** `updateNodeExecution()` matches node IDs with `includes()`: for example `'3'` also matches `'30'`, `'33'` and `'63'`. The displayed percentage is therefore approximate.
+4. The **"Cabiria"** style currently uses a watercolor prompt (`watercolor, soft washes…`). It is probably a placeholder, pending the Cabiria LoRA from the `*-cabiria-lora.json` workflows.
+5. `main.css` refers to `images/image.svg` (the icon for empty frames), which does not exist in the project.
+6. `ReferenceImageManager.restoreImageFromServer()` shows a hard-coded path from one specific machine (`C:\Users\StudiumLab\…`) in an error message.
+7. The images `images/styles/surrealism.png`, `images/styles/ornate-engraving.png` and `images/content/cabiria-maciste.jpg` are not used.
+8. `distant-worlds-today.html` is still a placeholder page.

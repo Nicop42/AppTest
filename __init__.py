@@ -1,17 +1,34 @@
+"""Prompting Heritage - ComfyUI custom extension.
+
+Serves the Prompting Heritage web application from the ComfyUI server and
+adds a few HTTP endpoints used by the front end. Image generation itself is
+performed by ComfyUI through its standard /prompt API and WebSocket.
+"""
+
 import os
-import json
-from aiohttp import web
-import server
-import aiofiles
 import uuid
 
-# === Directory Paths ===
-BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-WEBROOT = os.path.join(BASE_DIR, "web")
+import aiofiles
+from aiohttp import web
 
-# 💡 Point to ComfyUI's REAL output directory
-OUTPUT_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "output"))
-INPUT_DIR = os.path.abspath(os.path.join(BASE_DIR, "..", "..", "input"))
+import server
+
+# === Paths ===
+EXTENSION_DIR = os.path.dirname(os.path.realpath(__file__))
+WEB_ROOT = os.path.join(EXTENSION_DIR, "web")
+
+# ComfyUI's real output/input directories (this extension lives in ComfyUI/custom_nodes/<name>)
+COMFYUI_OUTPUT_DIR = os.path.abspath(os.path.join(EXTENSION_DIR, "..", "..", "output"))
+COMFYUI_INPUT_DIR = os.path.abspath(os.path.join(EXTENSION_DIR, "..", "..", "input"))
+
+# URL prefix under which the whole web app is published
+APP_BASE_PATH = "/prompting-heritage"
+
+# Sub-folder of the ComfyUI output directory where generated images are stored (one folder per session)
+SESSIONS_OUTPUT_SUBFOLDER = "prompting-heritage"
+
+routes = server.PromptServer.instance.routes
+
 
 # === CORS Middleware ===
 @web.middleware
@@ -26,129 +43,155 @@ async def cors_middleware(request, handler):
 
 server.PromptServer.instance.app.middlewares.append(cors_middleware)
 
-# === Static and HTML Routes ===
-@server.PromptServer.instance.routes.get("/test")
-def dungeon_entrance(request):
-    return web.FileResponse(os.path.join(WEBROOT, "landing.html"))
 
-# Serve index.html at /test/index.html
-@server.PromptServer.instance.routes.get("/test/index.html")
-def dungeon_index(request):
-    return web.FileResponse(os.path.join(WEBROOT, "index.html"))
+# === HTML Pages ===
+def serve_page(filename):
+    return web.FileResponse(os.path.join(WEB_ROOT, filename))
 
-# Serve mondi-cabiria.html at /mondi-cabiria.html
-@server.PromptServer.instance.routes.get("/mondi-cabiria.html")
-def mondi_cabiria(request):
-    return web.FileResponse(os.path.join(WEBROOT, "mondi-cabiria.html"))
 
-# Serve nuovo-cabiria.html at /nuovo-cabiria.html
-@server.PromptServer.instance.routes.get("/nuovo-cabiria.html")
-def nuovo_cabiria(request):
-    return web.FileResponse(os.path.join(WEBROOT, "nuovo-cabiria.html"))
+@routes.get(APP_BASE_PATH)
+async def redirect_to_landing_page(request):
+    # Trailing slash is required so that relative asset paths (css/, js/, images/) resolve under the prefix
+    raise web.HTTPFound(f"{APP_BASE_PATH}/")
 
-# ✅ AGGIUNTO: Supporto per percorsi originali /test/
-server.PromptServer.instance.routes.static("/test/css/", path=os.path.join(WEBROOT, "css"))
-server.PromptServer.instance.routes.static("/test/js/", path=os.path.join(WEBROOT, "js"))
-server.PromptServer.instance.routes.static("/test/images/", path=os.path.join(WEBROOT, "images"))
 
-# ✅ AGGIUNTO: Supporto per percorsi diretti (compatibilità con lavoro colleghi)
-server.PromptServer.instance.routes.static("/css/", path=os.path.join(WEBROOT, "css"))
-server.PromptServer.instance.routes.static("/js/", path=os.path.join(WEBROOT, "js"))
-server.PromptServer.instance.routes.static("/images/", path=os.path.join(WEBROOT, "images"))
+@routes.get(f"{APP_BASE_PATH}/")
+async def landing_page(request):
+    return serve_page("landing.html")
 
-# ✅ Serve real ComfyUI output folder at /output/
-server.PromptServer.instance.routes.static("/output/", path=OUTPUT_DIR)
 
-# ✅ NEW: Image Upload Endpoint
-@server.PromptServer.instance.routes.post("/upload/image")
-async def upload_image(request):
+@routes.get(f"{APP_BASE_PATH}/generator.html")
+async def generator_page(request):
+    return serve_page("generator.html")
+
+
+@routes.get(f"{APP_BASE_PATH}/distant-worlds-in-cabiria.html")
+async def distant_worlds_in_cabiria_page(request):
+    return serve_page("distant-worlds-in-cabiria.html")
+
+
+@routes.get(f"{APP_BASE_PATH}/distant-worlds-today.html")
+async def distant_worlds_today_page(request):
+    return serve_page("distant-worlds-today.html")
+
+
+# === Legacy URLs (kept so existing links and QR codes keep working) ===
+LEGACY_REDIRECTS = {
+    "/test": f"{APP_BASE_PATH}/",
+    "/test/index.html": f"{APP_BASE_PATH}/generator.html",
+    "/mondi-cabiria.html": f"{APP_BASE_PATH}/distant-worlds-in-cabiria.html",
+    "/nuovo-cabiria.html": f"{APP_BASE_PATH}/distant-worlds-today.html",
+}
+
+
+def make_legacy_redirect(target):
+    async def redirect(request):
+        raise web.HTTPMovedPermanently(target)
+    return redirect
+
+
+for legacy_path, target_path in LEGACY_REDIRECTS.items():
+    routes.get(legacy_path)(make_legacy_redirect(target_path))
+
+
+# === Static Assets ===
+for asset_dir in ("css", "js", "images", "workflows"):
+    routes.static(f"{APP_BASE_PATH}/{asset_dir}/", path=os.path.join(WEB_ROOT, asset_dir))
+
+# Generated images, read directly from ComfyUI's output folder
+routes.static("/output/", path=COMFYUI_OUTPUT_DIR)
+
+
+# === POST /upload/image ===
+@routes.post("/upload/image")
+async def upload_reference_image(request):
     try:
         reader = await request.multipart()
         field = await reader.next()
-        
+
         if field.name != 'image':
             return web.json_response({"error": "No image field found"}, status=400)
-        
+
         # Generate unique filename
         filename = f"{uuid.uuid4().hex}_{field.filename}"
-        filepath = os.path.join(INPUT_DIR, filename)
-        
-        # Ensure input directory exists
-        os.makedirs(INPUT_DIR, exist_ok=True)
-        
-        # Save the uploaded file
+        filepath = os.path.join(COMFYUI_INPUT_DIR, filename)
+
+        os.makedirs(COMFYUI_INPUT_DIR, exist_ok=True)
+
         async with aiofiles.open(filepath, 'wb') as f:
             while True:
                 chunk = await field.read_chunk()
                 if not chunk:
                     break
                 await f.write(chunk)
-        
+
         print(f"📁 Image uploaded: {filename}")
-        
+
         return web.json_response({
             "name": filename,
             "subfolder": "",
             "type": "input"
         })
-        
+
     except Exception as e:
         print("❌ Error uploading image:", str(e))
         return web.json_response({"error": str(e)}, status=500)
 
+
 # === POST /prompt ===
-@server.PromptServer.instance.routes.post("/prompt")
-async def handle_prompt(request):
+@routes.post("/prompt")
+async def save_prompt_metadata(request):
     try:
         data = await request.json()
 
-        # === Extract core fields ===
         client_id = data.get("client_id")
-        prompt_data = data.get("prompt")
+        workflow = data.get("prompt")
 
-        if not client_id or not prompt_data:
+        if not client_id or not workflow:
             return web.json_response({"error": "Missing client_id or prompt"}, status=400)
 
-        # === Extract from SaveImage node (28) ===
-        save_node = prompt_data.get("28", {}).get("inputs", {})
-        filename_prefix = save_node.get("filename_prefix", "")
+        # === SaveImage node (28) ===
+        save_node_inputs = workflow.get("28", {}).get("inputs", {})
+        filename_prefix = save_node_inputs.get("filename_prefix", "")
         if not filename_prefix:
             return web.json_response({"error": "Missing filename_prefix in node 28"}, status=400)
 
-        # === Get timestamp and folder from filename_prefix
+        # === Timestamp and session folder from filename_prefix ===
         timestamp = filename_prefix.split("/")[-1]
-        session_dir = os.path.join(OUTPUT_DIR, os.path.dirname(filename_prefix))
+        session_dir = os.path.join(COMFYUI_OUTPUT_DIR, os.path.dirname(filename_prefix))
         os.makedirs(session_dir, exist_ok=True)
 
-        # === Extract prompt data safely ===
-        pos = prompt_data.get("30", {}).get("inputs", {}).get("text_g", "N/A")
-        neg = prompt_data.get("33", {}).get("inputs", {}).get("text_g", "N/A")
-        seed = prompt_data.get("3", {}).get("inputs", {}).get("seed", "unknown")
+        positive_prompt = workflow.get("30", {}).get("inputs", {}).get("text_g", "N/A")
+        negative_prompt = workflow.get("33", {}).get("inputs", {}).get("text_g", "N/A")
+        seed = workflow.get("3", {}).get("inputs", {}).get("seed", "unknown")
 
         # === Save prompt info to .txt file ===
-        txt_path = os.path.join(session_dir, f"{timestamp}_prompt.txt")
-        with open(txt_path, "w", encoding="utf-8") as f:
-            f.write(f"Positive Prompt:\n{pos}\n\n")
-            f.write(f"Negative Prompt:\n{neg}\n\n")
+        metadata_path = os.path.join(session_dir, f"{timestamp}_prompt.txt")
+        with open(metadata_path, "w", encoding="utf-8") as f:
+            f.write(f"Positive Prompt:\n{positive_prompt}\n\n")
+            f.write(f"Negative Prompt:\n{negative_prompt}\n\n")
             f.write(f"Seed: {seed}\n")
 
-        print(f"📝 Saved prompt metadata to {txt_path}")
+        print(f"📝 Saved prompt metadata to {metadata_path}")
 
-        # ✅ Return success — ComfyUI handles actual generation
+        # ComfyUI handles the actual generation
         return web.json_response({"status": "accepted"})
 
     except Exception as e:
         print("❌ Error in /prompt:", str(e))
         return web.json_response({"error": str(e)}, status=500)
 
-@server.PromptServer.instance.routes.get("/history")
-async def get_history(request):
+
+# === GET /history ===
+@routes.get("/history")
+async def list_session_images(request):
     try:
         client_id = request.query.get("client_id")
         if not client_id:
             return web.json_response({"error": "Missing client_id"}, status=400)
 
-        session_dir = os.path.join(OUTPUT_DIR, "gradio", f"session_{client_id[:8]}")
+        session_folder = f"session_{client_id[:8]}"
+        session_dir = os.path.join(COMFYUI_OUTPUT_DIR, SESSIONS_OUTPUT_SUBFOLDER, session_folder)
         if not os.path.exists(session_dir):
             return web.json_response({"images": []})
 
@@ -156,7 +199,7 @@ async def get_history(request):
         for fname in sorted(os.listdir(session_dir)):
             if fname.lower().endswith((".png", ".jpg", ".jpeg", ".webp")):
                 images.append({
-                    "url": f"/output/gradio/session_{client_id[:8]}/{fname}",
+                    "url": f"/output/{SESSIONS_OUTPUT_SUBFOLDER}/{session_folder}/{fname}",
                     "filename": fname
                 })
 
@@ -166,7 +209,8 @@ async def get_history(request):
         print("❌ Error in /history:", str(e))
         return web.json_response({"error": str(e)}, status=500)
 
-# ✅ Required for ComfyUI to recognize this as a custom module
+
+# Required for ComfyUI to recognize this as a custom node package (it defines no nodes)
 NODE_CLASS_MAPPINGS = {}
 NODE_DISPLAY_NAME_MAPPINGS = {}
 

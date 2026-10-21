@@ -1,16 +1,16 @@
-// Settings and Filters Management Module
+// Generation Settings Module (seed, format, quality, guidance) - backs the settings modal
 import { DOMUtils } from './utils.js';
 
 export class SettingsManager {
   constructor() {
     this.selectedFormat = "square";
-    this.qualitySlider = document.getElementById("filter-quality");
-    this.definitionSlider = document.getElementById("filter-definition");
+    this.qualitySlider = document.getElementById("quality-slider");
+    this.guidanceSlider = document.getElementById("guidance-slider");
     this.qualityVal = document.getElementById("quality-value");
-    this.definitionVal = document.getElementById("definition-value");
-    this.seedToggleFilter = document.getElementById("filter-seed-toggle");
-    this.seedInputFilter = document.getElementById("filter-seed-value");
-    this.filtersModal = document.getElementById("filtersModal");
+    this.guidanceVal = document.getElementById("guidance-value");
+    this.customSeedToggle = document.getElementById("custom-seed-toggle");
+    this.customSeedInput = document.getElementById("custom-seed-value");
+    this.settingsModal = document.getElementById("settings-modal");
 
     this.initialize();
   }
@@ -19,7 +19,7 @@ export class SettingsManager {
     this.setupSliders();
     this.setupFormatButtons();
     this.setupSeedToggle();
-    this.setupFilterButtons();
+    this.setupModalButtons();
     this.updateFormatButtons("square");
   }
 
@@ -30,9 +30,9 @@ export class SettingsManager {
       });
     }
 
-    if (this.definitionSlider && this.definitionVal) {
-      this.definitionSlider.addEventListener("input", () => {
-        this.definitionVal.textContent = this.definitionSlider.value;
+    if (this.guidanceSlider && this.guidanceVal) {
+      this.guidanceSlider.addEventListener("input", () => {
+        this.guidanceVal.textContent = this.guidanceSlider.value;
       });
     }
   }
@@ -58,81 +58,81 @@ export class SettingsManager {
   }
 
   setupSeedToggle() {
-    if (this.seedToggleFilter && this.seedInputFilter) {
-      this.seedToggleFilter.addEventListener("change", () => {
-        this.seedInputFilter.disabled = !this.seedToggleFilter.checked;
+    if (this.customSeedToggle && this.customSeedInput) {
+      this.customSeedToggle.addEventListener("change", () => {
+        this.customSeedInput.disabled = !this.customSeedToggle.checked;
         
-        if (this.seedToggleFilter.checked && this.seedInputFilter.value === "") {
-          this.seedInputFilter.value = DOMUtils.generateSeed();
+        if (this.customSeedToggle.checked && this.customSeedInput.value === "") {
+          this.customSeedInput.value = DOMUtils.generateSeed();
         }
       });
     }
 
-    if (this.filtersModal && this.seedInputFilter && this.seedToggleFilter) {
-      this.seedInputFilter.disabled = !this.seedToggleFilter.checked;
+    if (this.settingsModal && this.customSeedInput && this.customSeedToggle) {
+      this.customSeedInput.disabled = !this.customSeedToggle.checked;
 
-      this.filtersModal.addEventListener("shown.bs.modal", () => {
-        this.seedInputFilter.disabled = !this.seedToggleFilter.checked;
+      this.settingsModal.addEventListener("shown.bs.modal", () => {
+        this.customSeedInput.disabled = !this.customSeedToggle.checked;
 
-        if (this.seedInputFilter.value === "") {
-          this.seedInputFilter.value = DOMUtils.generateSeed();
+        if (this.customSeedInput.value === "") {
+          this.customSeedInput.value = DOMUtils.generateSeed();
         }
       });
     }
   }
 
-  setupFilterButtons() {
-    const resetFiltersBtn = document.getElementById("reset-filters");
-    if (resetFiltersBtn) {
-      resetFiltersBtn.addEventListener("click", () => {
-        this.resetFilters();
+  setupModalButtons() {
+    const resetSettingsBtn = document.getElementById("reset-settings");
+    if (resetSettingsBtn) {
+      resetSettingsBtn.addEventListener("click", () => {
+        this.resetSettings();
       });
     }
 
-    const applyFiltersBtn = document.getElementById("apply-filters");
-    if (applyFiltersBtn) {
-      applyFiltersBtn.addEventListener("click", () => {
-        this.applyFilters();
+    const applySettingsBtn = document.getElementById("apply-settings");
+    if (applySettingsBtn) {
+      applySettingsBtn.addEventListener("click", () => {
+        this.confirmSettings();
       });
     }
   }
 
-  resetFilters() {
-    if (this.seedToggleFilter) this.seedToggleFilter.checked = false;
-    if (this.seedInputFilter) this.seedInputFilter.value = "";
+  resetSettings() {
+    if (this.customSeedToggle) this.customSeedToggle.checked = false;
+    if (this.customSeedInput) this.customSeedInput.value = "";
     if (this.qualitySlider) this.qualitySlider.value = 15;
-    if (this.definitionSlider) this.definitionSlider.value = 75;
+    if (this.guidanceSlider) this.guidanceSlider.value = 75;
     if (this.qualityVal) this.qualityVal.textContent = "15";
-    if (this.definitionVal) this.definitionVal.textContent = "75";
+    if (this.guidanceVal) this.guidanceVal.textContent = "75";
 
     this.selectedFormat = "square";
     this.updateFormatButtons("square");
   }
 
-  applyFilters() {
-    const useSeed = this.seedToggleFilter ? this.seedToggleFilter.checked : false;
-    const seedVal = this.seedInputFilter ? parseInt(this.seedInputFilter.value) || null : null;
+  confirmSettings() {
+    const useSeed = this.customSeedToggle ? this.customSeedToggle.checked : false;
+    const seedVal = this.customSeedInput ? parseInt(this.customSeedInput.value) || null : null;
     const quality = this.qualitySlider ? parseInt(this.qualitySlider.value) : 15;
-    const definition = this.definitionSlider ? parseInt(this.definitionSlider.value) : 75;
+    const guidance = this.guidanceSlider ? parseInt(this.guidanceSlider.value) : 75;
 
-    console.log("✅ FILTRI APPLICATI:");
-    console.log({ useSeed, seedVal, selectedFormat: this.selectedFormat, quality, definition });
+    console.log("✅ Settings applied:");
+    console.log({ useSeed, seedVal, selectedFormat: this.selectedFormat, quality, guidance });
 
     return {
       useSeed,
       seedVal,
       selectedFormat: this.selectedFormat,
       quality,
-      definition
+      guidance
     };
   }
 
   getSettings() {
     return {
-      useCustomSeed: this.seedToggleFilter?.checked || false,
-      customSeed: this.seedInputFilter?.value || null,
+      useCustomSeed: this.customSeedToggle?.checked || false,
+      customSeed: this.customSeedInput?.value || null,
       quality: this.qualitySlider ? parseInt(this.qualitySlider.value) : 15,
-      definition: this.definitionSlider ? parseInt(this.definitionSlider.value) : 75,
+      guidance: this.guidanceSlider ? parseInt(this.guidanceSlider.value) : 75,
       format: this.selectedFormat
     };
   }
@@ -151,24 +151,24 @@ export class SettingsManager {
 
   // Toggle seed input based on toggle state
   toggleSeedInput() {
-    if (this.seedToggleFilter && this.seedInputFilter) {
-      this.seedInputFilter.disabled = !this.seedToggleFilter.checked;
+    if (this.customSeedToggle && this.customSeedInput) {
+      this.customSeedInput.disabled = !this.customSeedToggle.checked;
       
-      if (this.seedToggleFilter.checked && this.seedInputFilter.value === "") {
-        this.seedInputFilter.value = DOMUtils.generateSeed();
+      if (this.customSeedToggle.checked && this.customSeedInput.value === "") {
+        this.customSeedInput.value = DOMUtils.generateSeed();
       }
     }
   }
 
   // Apply settings back to the UI
   applySettings(settings) {
-    if (settings.useCustomSeed !== undefined && this.seedToggleFilter) {
-      this.seedToggleFilter.checked = settings.useCustomSeed;
+    if (settings.useCustomSeed !== undefined && this.customSeedToggle) {
+      this.customSeedToggle.checked = settings.useCustomSeed;
       this.toggleSeedInput();
     }
     
-    if (settings.customSeed !== undefined && this.seedInputFilter) {
-      this.seedInputFilter.value = settings.customSeed || '';
+    if (settings.customSeed !== undefined && this.customSeedInput) {
+      this.customSeedInput.value = settings.customSeed || '';
     }
     
     if (settings.quality !== undefined && this.qualitySlider && this.qualityVal) {
@@ -176,9 +176,9 @@ export class SettingsManager {
       this.qualityVal.textContent = settings.quality;
     }
     
-    if (settings.definition !== undefined && this.definitionSlider && this.definitionVal) {
-      this.definitionSlider.value = settings.definition;
-      this.definitionVal.textContent = settings.definition;
+    if (settings.guidance !== undefined && this.guidanceSlider && this.guidanceVal) {
+      this.guidanceSlider.value = settings.guidance;
+      this.guidanceVal.textContent = settings.guidance;
     }
     
     if (settings.format !== undefined) {

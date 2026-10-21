@@ -1,4 +1,4 @@
-/* Font moderno + icone */
+/* Fonts + icons */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined');
 
@@ -15,7 +15,7 @@
   box-sizing: border-box;
 }
 
-/* Struttura a colonna */
+/* Base layout */
 html, body {
   height: 100%;
   margin: 0;
@@ -27,7 +27,7 @@ html, body {
   font-family: Arial, Verdana, Geneva, Tahoma, sans-serif;
 }
 
-/* Struttura verticale */
+/* Vertical layout */
 body {
   display: flex;
   flex-direction: column;
@@ -53,7 +53,7 @@ h1{
   border: 0;
 }
 
-/* La pagina principale (form + risultati + gallery) */
+/* Main page container (form + result + gallery) */
 .page {
   flex: 1 0 auto;
   width: 100%;
@@ -110,7 +110,7 @@ input::placeholder{
   background: #fff;
  
 }
-#main-progress {
+#generation-progress {
   display: none;
 }
 progress {
@@ -145,17 +145,17 @@ progress::-webkit-progress-value{
   margin: 0 auto;
 }
 
-/* RISULTATI */
+/* RESULT */
 #results{
   position: relative;
 }
 
-#created-img-container{
+#result-container{
   position: relative;
   padding: 5px;
 }
 
-#created-img-container.empty {
+#result-container.empty {
   height: 100vw;
   max-height: 400px;
   background: #fffef4 url(../images/image.svg) center no-repeat;
@@ -183,7 +183,7 @@ progress::-webkit-progress-value{
   width: 100%;
 }
 
-/* Hide Riusa button for the main image */
+/* Hide the "Riusa" (reuse) button for the main image */
 #results .image-actions .reuse-btn {
   display: none;
 }
@@ -245,8 +245,8 @@ progress::-webkit-progress-value{
   display: none;
 }
 
-/* Pulsanti */
-#button-wrap{
+/* Buttons */
+#action-bar{
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -307,11 +307,11 @@ button .material-symbols-outlined {
   background-color: #ddd;
 }
 
-#filter{
+#open-settings-btn{
   background: #ddd;
 }
 
-#generate{
+#generate-btn{
   flex-grow: 1;
   justify-content: center;
 }
@@ -334,13 +334,13 @@ button .material-symbols-outlined {
   vertical-align: middle;
 }*/
 
-/* carosello stile */
-#container-stili{
+/* Style presets */
+#style-picker{
   margin-top: 20px;
   margin-bottom: 20px;
 }
 
-.wrapper-stili{
+.style-grid{
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
@@ -363,17 +363,17 @@ button .material-symbols-outlined {
   border-radius: 6px;
 }
 
-.stile-block.active img{
+.style-card.active img{
   border: 3px solid var(--highlight);
 }
 
-.stile-block:not(.active) img {
+.style-card:not(.active) img {
   filter: brightness(0.6);
   transition: filter 0.3s ease;
 }
 
-.stile-block:not(.active) .style-btn:hover img,
-.stile-block:not(.active) .style-btn:focus-within img {
+.style-card:not(.active) .style-btn:hover img,
+.style-card:not(.active) .style-btn:focus-within img {
   filter: brightness(1);
   cursor: pointer;
 }
@@ -382,14 +382,14 @@ button .material-symbols-outlined {
   outline: 2px solid var(--highlight);
 }
 
-.nome-stile{
+.thumbnail-label{
   font-size: 0.75rem;
   font-weight: normal;
   line-height: 1.25;
   text-align: center;
 }
 
-.stile-block.active .nome-stile{
+.style-card.active .thumbnail-label{
   font-weight: bold;
 }
 
@@ -413,7 +413,7 @@ button .material-symbols-outlined {
   margin-top: 10px;
 }
 
-/* Settings */
+/* Settings modal */
 .modal button{
   display: flex;
   font-size: 1rem;
@@ -445,13 +445,13 @@ button .material-symbols-outlined {
   background-color: #2e2e2e;
 }
 
-.row-filtro{
+.settings-row{
   border-bottom: 2px #999 solid;
   padding-bottom: 20px;
   margin-bottom: 20px;
 }
 
-/* Immagini */
+/* Images */
 .image-block{
   display: flex;
   gap:10px;
@@ -493,7 +493,7 @@ button .material-symbols-outlined {
 }
 
 #gallery{
-  display: none; /* nascosta di default */
+  display: none; /* hidden by default */
   margin-bottom: 60px;
 }
 
@@ -502,7 +502,7 @@ button .material-symbols-outlined {
 }
 
 #gallery-images {
-  min-height: 200px; /* per dare ingombro minimo */
+  min-height: 200px; /* reserve minimum space */
   padding: 1rem;
   border: 1px solid #ccc;
   border-radius: 12px;
@@ -568,41 +568,41 @@ button .material-symbols-outlined {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/**/
-#use-photo-section{
+/* Reference image */
+#reference-image-section{
   margin-top: 40px;
 }
 .modal-title{
   margin-top: 0;
   
 }
-#usePhotoModal hr{
+#reference-image-modal hr{
   margin: 40px 0 38px;
 }
-#usePhotoModal  h3{
+#reference-image-modal  h3{
   margin: 0px 0 15px;
   font-size: 1.25rem;
   text-align: left;
 }
-.swiper-archivio{
+.archive-swiper{
   --swiper-theme-color: var(--highlight);
   padding-bottom: 40px;
 }
-.swiper-archivio img{
+.archive-swiper img{
   max-width: 100%;
   height: auto;
   border-radius: 4px;
 }
-.img-archivio-btn{
+.archive-image-btn{
   padding: 0 !important;
   background: transparent;
   flex-direction: column;
   font-weight: normal;
 }
-.swiper-slide.active .img-archivio-btn img{
+.swiper-slide.active .archive-image-btn img{
   border: 3px solid var(--highlight);
 }
-.use-photo-text{
+.reference-image-summary{
   display: flex;
   gap:10px;
   align-items: center;
@@ -612,16 +612,16 @@ button .material-symbols-outlined {
   background: #f8f8f8;
   border:1px solid  #ddd;
 }
-.use-photo-text button{
+.reference-image-summary button{
   flex-shrink: 0;
 }
 
-.use-photo-text p{
+.reference-image-summary p{
   margin: 0;
   font-size: 14px;
   word-break: break-word;
 }
-.use-photo-btnWarp{
+.photo-source-buttons{
   width: fit-content;
   display: flex;
   gap:10px;
@@ -629,12 +629,12 @@ button .material-symbols-outlined {
   justify-content: space-between;
   /*margin: 0 auto;*/
 }
-.use-photo-btnWarp button{
+.photo-source-buttons button{
   line-height: 1;
   padding-top: 10px;
   padding-bottom: 10px;
 }
-#previewArea {
+#reference-image-preview {
   margin-top: 10px;
   border: 2px dashed #ccc;
   padding: 10px;
@@ -647,13 +647,13 @@ button .material-symbols-outlined {
   background: #f9f9f9 url(../images/image.svg) center no-repeat;
 }
 
-#previewArea img {
+#reference-image-preview img {
   max-width: 100%;
   max-height: 300px;
   object-fit: contain;
 }
 
-/* FOOTER fisso in fondo */
+/* Footer pinned to the bottom */
 .page-footer {
   background-color: var(--highlight);
   min-height: 40px;
@@ -662,33 +662,33 @@ button .material-symbols-outlined {
 }
 
 /*
-PAGINA INTRO
+EDITORIAL PAGES
 */
-#text-container img{
+#article-content img{
   max-width: 100%;
 }
-#text-container p{
+#article-content p{
   margin: 1.5rem 0;
   text-align: left;
 }
 
-#text-container h2, #text-container h3, #text-container h4, #text-container h5, #text-container h6{
+#article-content h2, #article-content h3, #article-content h4, #article-content h5, #article-content h6{
   text-align: left;
   margin: 1em 0 0;
 }
-#text-container h2{
+#article-content h2{
   font-size: 1.75rem;
 
-} #text-container h3{
+} #article-content h3{
   font-size: 1.5rem;
 
-} #text-container h4{
+} #article-content h4{
   font-size: 1.25rem;
   
-} #text-container h5{
+} #article-content h5{
   font-size: 1.125rem;
   
-} #text-container h6{
+} #article-content h6{
   font-size: 1rem;
 
 }

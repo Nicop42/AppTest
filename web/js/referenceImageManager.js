@@ -1,98 +1,98 @@
-// Photo Upload Module
-// Photo Upload Module
+// Reference Image Module: lets the visitor pick the source image for image-to-image generation
+// (camera, device gallery or museum archive) and prepares it for upload
 import { DOMUtils } from "./utils.js";
 
-export class PhotoUpload {
+export class ReferenceImageManager {
   constructor() {
     this.uploadedImageURL = null;
     this.selectedFile = null;
     this.uploadedImageName = null;
-    this.onPhotoAppliedCallback = null;
+    this.onImageAppliedCallback = null;
 
     // DOM elements
-    this.takePhotoBtn = document.getElementById("takePhotoBtn");
-    this.uploadPhotoBtn = document.getElementById("uploadPhotoBtn");
-    this.cameraInput = document.getElementById("cameraInput");
-    this.uploadInput = document.getElementById("uploadInput");
-    this.previewArea = document.getElementById("previewArea");
-    this.resetBtn = document.getElementById("reset-photo");
-    this.applyBtn = document.getElementById("apply-photo");
-    this.photoTextP = document.querySelector(
-      "#use-photo-section .use-photo-text p"
+    this.takePhotoBtn = document.getElementById("take-photo-btn");
+    this.choosePhotoBtn = document.getElementById("choose-photo-btn");
+    this.cameraInput = document.getElementById("camera-input");
+    this.fileInput = document.getElementById("file-input");
+    this.previewContainer = document.getElementById("reference-image-preview");
+    this.resetBtn = document.getElementById("reset-reference-image");
+    this.applyBtn = document.getElementById("apply-reference-image");
+    this.selectionLabel = document.querySelector(
+      "#reference-image-section .reference-image-summary p"
     );
-    this.usePhotoModal = document.getElementById("usePhotoModal");
+    this.referenceImageModal = document.getElementById("reference-image-modal");
 
     this.initialize();
   }
 
   initialize() {
-    console.log("🔧 Initializing PhotoUpload module");
+    console.log("🔧 Initializing ReferenceImageManager module");
     this.setupEventListeners();
     this.logDOMElements();
   }
 
   logDOMElements() {
-    console.log("📋 PhotoUpload DOM Elements Check:");
+    console.log("📋 ReferenceImageManager DOM Elements Check:");
     console.log("- takePhotoBtn:", !!this.takePhotoBtn);
-    console.log("- uploadPhotoBtn:", !!this.uploadPhotoBtn);
+    console.log("- choosePhotoBtn:", !!this.choosePhotoBtn);
     console.log("- cameraInput:", !!this.cameraInput);
-    console.log("- uploadInput:", !!this.uploadInput);
-    console.log("- previewArea:", !!this.previewArea);
+    console.log("- fileInput:", !!this.fileInput);
+    console.log("- previewContainer:", !!this.previewContainer);
     console.log("- resetBtn:", !!this.resetBtn);
     console.log("- applyBtn:", !!this.applyBtn);
-    console.log("- photoTextP:", !!this.photoTextP);
+    console.log("- selectionLabel:", !!this.selectionLabel);
   }
 
   setupEventListeners() {
-    /* IMMAGINI MUSEO */
-    // Setup archivio image click handlers when modal is shown
-    if (this.usePhotoModal) {
+    /* MUSEUM ARCHIVE IMAGES */
+    // Setup archive image click handlers when modal is shown
+    if (this.referenceImageModal) {
       // Store reference to this for use in event listeners
-      const photoUploadInstance = this;
+      const manager = this;
       
-      this.usePhotoModal.addEventListener("show.bs.modal", function (event) {
-        console.log("show.bs.modal - Setting up archivio image handlers");
+      this.referenceImageModal.addEventListener("show.bs.modal", function (event) {
+        console.log("show.bs.modal - Setting up archive image handlers");
         
-        // Setup click handlers for archivio images (Swiper is initialized by archivioManager)
+        // Setup click handlers for archive images (Swiper is initialized by archiveCarousel.js)
         setTimeout(() => {
-          document.querySelectorAll(".img-archivio-btn").forEach((btn) => {
+          document.querySelectorAll(".archive-image-btn").forEach((btn) => {
             btn.addEventListener("click", async () => {
               const slide = btn.closest(".swiper-slide");
               const isActive = slide.classList.contains("active");
 
-              // Rimuove "active" da tutti gli swiper-slide
+              // Remove "active" from all slides
               document
                 .querySelectorAll(".swiper-slide")
                 .forEach((s) => s.classList.remove("active"));
 
-              // Se non era già attivo, attivalo
+              // If it wasn't already active, activate it
               if (!isActive) {
                 slide.classList.add("active");
                 const imgElement = btn.querySelector("img");
                 const imagePath = imgElement.src;
                 const imageName = imagePath.split("/").pop(); // Get filename from path
                 
-                console.log(`🖼️ Archivio image selected: ${imageName}`);
+                console.log(`🖼️ Archive image selected: ${imageName}`);
                 
                 try {
-                  // Load the archivio image for img2img processing
-                  await photoUploadInstance.loadArchivioImage(imagePath, imageName);
+                  // Load the archive image for img2img processing
+                  await manager.loadArchiveImage(imagePath, imageName);
                   
                   // Close the modal after successful selection
-                  if (photoUploadInstance.usePhotoModal && typeof bootstrap !== 'undefined') {
-                    const modal = bootstrap.Modal.getInstance(photoUploadInstance.usePhotoModal);
+                  if (manager.usePhotoModal && typeof bootstrap !== 'undefined') {
+                    const modal = bootstrap.Modal.getInstance(manager.usePhotoModal);
                     if (modal) {
                       modal.hide();
                     } else {
                       // If no instance exists, create one and hide it
-                      const newModal = new bootstrap.Modal(photoUploadInstance.usePhotoModal);
+                      const newModal = new bootstrap.Modal(manager.usePhotoModal);
                       newModal.hide();
                     }
                   } else {
                     console.warn("Bootstrap not available or modal not found");
                   }
                 } catch (error) {
-                  console.error("❌ Error loading archivio image:", error);
+                  console.error("❌ Error loading archive image:", error);
                   alert(`Errore nel caricamento dell'immagine: ${error.message}`);
                 }
               }
@@ -102,7 +102,7 @@ export class PhotoUpload {
       });
     }
 
-    /* fine utilizzo immagini museo */
+    /* end museum archive images */
 
     if (this.takePhotoBtn && this.cameraInput) {
       this.takePhotoBtn.addEventListener("click", () => {
@@ -113,10 +113,10 @@ export class PhotoUpload {
       console.warn("❌ Take photo button or camera input not found");
     }
 
-    if (this.uploadPhotoBtn && this.uploadInput) {
-      this.uploadPhotoBtn.addEventListener("click", () => {
+    if (this.choosePhotoBtn && this.fileInput) {
+      this.choosePhotoBtn.addEventListener("click", () => {
         console.log("📁 Upload photo button clicked");
-        this.uploadInput.click();
+        this.fileInput.click();
       });
     } else {
       console.warn("❌ Upload photo button or upload input not found");
@@ -129,8 +129,8 @@ export class PhotoUpload {
       });
     }
 
-    if (this.uploadInput) {
-      this.uploadInput.addEventListener("change", (e) => {
+    if (this.fileInput) {
+      this.fileInput.addEventListener("change", (e) => {
         console.log("📁 Upload input changed, files:", e.target.files.length);
         this.handleFile(e.target.files[0]);
       });
@@ -139,14 +139,14 @@ export class PhotoUpload {
     if (this.resetBtn) {
       this.resetBtn.addEventListener("click", () => {
         console.log("🔄 Reset button clicked");
-        this.resetPhoto();
+        this.resetImage();
       });
     }
 
     if (this.applyBtn) {
       this.applyBtn.addEventListener("click", () => {
         console.log("✅ Apply button clicked");
-        this.applyPhoto();
+        this.applyImage();
       });
     }
   }
@@ -204,7 +204,7 @@ export class PhotoUpload {
       this.uploadedImageURL = URL.createObjectURL(file);
       console.log("🖼️ Created new image URL:", this.uploadedImageURL);
 
-      if (this.previewArea) {
+      if (this.previewContainer) {
         // Check if this is a mobile photo that might need orientation correction
         const img = new Image();
         img.onload = () => {
@@ -216,7 +216,7 @@ export class PhotoUpload {
         };
         img.src = this.uploadedImageURL;
 
-        this.previewArea.innerHTML = `<img src="${this.uploadedImageURL}" alt="Preview" style="max-width: 100%; max-height: 300px; object-fit: contain;">`;
+        this.previewContainer.innerHTML = `<img src="${this.uploadedImageURL}" alt="Preview" style="max-width: 100%; max-height: 300px; object-fit: contain;">`;
         console.log("✅ Preview updated successfully");
       } else {
         console.warn("❌ Preview area not found");
@@ -224,8 +224,8 @@ export class PhotoUpload {
 
       // Update selected file and text
       this.selectedFile = file;
-      if (this.photoTextP) {
-        this.photoTextP.textContent = file.name;
+      if (this.selectionLabel) {
+        this.selectionLabel.textContent = file.name;
         console.log("📝 Updated photo text to:", file.name);
       }
 
@@ -236,7 +236,7 @@ export class PhotoUpload {
     }
   }
 
-  resetPhoto() {
+  resetImage() {
     console.log("🔄 Resetting photo...");
 
     try {
@@ -246,8 +246,8 @@ export class PhotoUpload {
         console.log("🗑️ Revoked image URL");
       }
 
-      if (this.previewArea) {
-        this.previewArea.innerHTML = "";
+      if (this.previewContainer) {
+        this.previewContainer.innerHTML = "";
         console.log("🧹 Cleared preview area");
       }
 
@@ -255,15 +255,15 @@ export class PhotoUpload {
         this.cameraInput.value = "";
       }
 
-      if (this.uploadInput) {
-        this.uploadInput.value = "";
+      if (this.fileInput) {
+        this.fileInput.value = "";
       }
 
       this.selectedFile = null;
       this.uploadedImageName = null;
 
-      if (this.photoTextP) {
-        this.photoTextP.textContent = "Scegli una foto dal tuo device";
+      if (this.selectionLabel) {
+        this.selectionLabel.textContent = "Scegli una foto dal tuo device";
         console.log("📝 Reset photo text");
       }
 
@@ -273,7 +273,7 @@ export class PhotoUpload {
     }
   }
 
-  async processImageForMobile(file) {
+  async prepareImageForUpload(file) {
     return new Promise((resolve, reject) => {
       console.log("🔧 Processing image for mobile compatibility");
 
@@ -387,7 +387,7 @@ export class PhotoUpload {
     });
   }
 
-  async applyPhoto() {
+  async applyImage() {
     console.log("✅ Applying photo...");
 
     if (!this.selectedFile) {
@@ -396,7 +396,7 @@ export class PhotoUpload {
       return;
     }
 
-    if (!this.onPhotoAppliedCallback) {
+    if (!this.onImageAppliedCallback) {
       console.warn("❌ No callback set for photo applied");
       alert("Callback non configurato");
       return;
@@ -405,7 +405,7 @@ export class PhotoUpload {
     try {
       // Process the image for mobile compatibility (removes EXIF orientation issues)
       console.log("🔧 Processing image before upload...");
-      const result = await this.processImageForMobile(this.selectedFile);
+      const result = await this.prepareImageForUpload(this.selectedFile);
 
       // Store dimensions for later use
       this.originalImageDimensions = result.originalDimensions;
@@ -419,7 +419,7 @@ export class PhotoUpload {
         this.originalImageDimensions
       );
 
-      await this.onPhotoAppliedCallback(
+      await this.onImageAppliedCallback(
         result.file,
         this.originalImageDimensions
       );
@@ -434,9 +434,9 @@ export class PhotoUpload {
     return this.originalImageDimensions;
   }
 
-  setOnPhotoAppliedCallback(callback) {
+  setOnImageAppliedCallback(callback) {
     console.log("🔗 Setting photo applied callback");
-    this.onPhotoAppliedCallback = callback;
+    this.onImageAppliedCallback = callback;
   }
 
   getSelectedFile() {
@@ -503,7 +503,7 @@ export class PhotoUpload {
       const file = new File([blob], imageName, { type: blob.type });
 
       // Clear any existing image first
-      this.resetPhoto();
+      this.resetImage();
 
       // Restore the image to the upload component
       this.handleFile(file);
@@ -519,10 +519,10 @@ export class PhotoUpload {
     }
   }
 
-  hasPhoto() {
-    const hasPhoto = this.selectedFile !== null;
-    console.log("🤔 hasPhoto check:", hasPhoto);
-    return hasPhoto;
+  hasImage() {
+    const hasImage = this.selectedFile !== null;
+    console.log("🤔 hasImage check:", hasImage);
+    return hasImage;
   }
 
   getUploadedImageName() {
@@ -535,12 +535,12 @@ export class PhotoUpload {
   }
 
   /**
-   * Load an archivio image for img2img processing
+   * Load an archive image for img2img processing
    * @param {string} imagePath - The full path/URL to the image
    * @param {string} imageName - The filename of the image
    */
-  async loadArchivioImage(imagePath, imageName) {
-    console.log(`🖼️ Loading archivio image: ${imageName} from ${imagePath}`);
+  async loadArchiveImage(imagePath, imageName) {
+    console.log(`🖼️ Loading archive image: ${imageName} from ${imagePath}`);
     
     try {
       // Fetch the image from the path
@@ -555,28 +555,28 @@ export class PhotoUpload {
       // Create a File object from the blob
       const file = new File([blob], imageName, { type: blob.type });
       
-      console.log(`✅ Archivio image loaded as file:`, {
+      console.log(`✅ Archive image loaded as file:`, {
         name: file.name,
         size: file.size,
         type: file.type
       });
       
       // Use the same process as regular file upload
-      await this.handleArchivioFile(file, imagePath);
+      await this.handleArchiveFile(file, imagePath);
       
     } catch (error) {
-      console.error("❌ Error loading archivio image:", error);
+      console.error("❌ Error loading archive image:", error);
       throw error;
     }
   }
 
   /**
-   * Handle archivio file similarly to regular file upload
-   * @param {File} file - The File object created from the archivio image
+   * Handle archive file similarly to regular file upload
+   * @param {File} file - The File object created from the archive image
    * @param {string} imagePath - The original image path for preview
    */
-  async handleArchivioFile(file, imagePath) {
-    console.log("📋 HandleArchivioFile called with:", file.name);
+  async handleArchiveFile(file, imagePath) {
+    console.log("📋 handleArchiveFile called with:", file.name);
 
     try {
       // Revoke previous URL if exists
@@ -587,31 +587,31 @@ export class PhotoUpload {
 
       // Use the original image path for preview (no need to create object URL)
       this.uploadedImageURL = imagePath;
-      console.log("🖼️ Using archivio image path:", this.uploadedImageURL);
+      console.log("🖼️ Using archive image path:", this.uploadedImageURL);
 
-      if (this.previewArea) {
-        this.previewArea.innerHTML = `<img src="${imagePath}" alt="Preview" style="max-width: 100%; max-height: 300px; object-fit: contain;">`;
-        console.log("✅ Preview updated with archivio image");
+      if (this.previewContainer) {
+        this.previewContainer.innerHTML = `<img src="${imagePath}" alt="Preview" style="max-width: 100%; max-height: 300px; object-fit: contain;">`;
+        console.log("✅ Preview updated with archive image");
       }
 
       // Update selected file and text
       this.selectedFile = file;
       this.uploadedImageName = file.name;
       
-      if (this.photoTextP) {
-        this.photoTextP.textContent = `Immagine archivio: ${file.name}`;
-        console.log("📝 Updated photo text for archivio image:", file.name);
+      if (this.selectionLabel) {
+        this.selectionLabel.textContent = `Immagine archivio: ${file.name}`;
+        console.log("📝 Updated photo text for archive image:", file.name);
       }
 
       // If there's a callback set, automatically apply the image
-      if (this.onPhotoAppliedCallback) {
-        console.log("🔄 Auto-applying archivio image...");
-        await this.applyPhoto();
+      if (this.onImageAppliedCallback) {
+        console.log("🔄 Auto-applying archive image...");
+        await this.applyImage();
       }
 
-      console.log("✅ Archivio image processed successfully:", file.name);
+      console.log("✅ Archive image processed successfully:", file.name);
     } catch (error) {
-      console.error("❌ Error handling archivio file:", error);
+      console.error("❌ Error handling archive file:", error);
       throw error;
     }
   }

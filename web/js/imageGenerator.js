@@ -1,11 +1,12 @@
-// Image Generation Module
+// Image Generation Module: orchestrates a generation run, tracks progress and manages result/gallery
 import { DOMUtils } from './utils.js';
+import { WORKFLOW_NODES } from './comfyUIClient.js';
 
 export class ImageGenerator {
-  constructor(apiClient, settingsManager, photoUpload = null) {
+  constructor(apiClient, settingsManager, referenceImageManager = null) {
     this.apiClient = apiClient;
     this.settingsManager = settingsManager;
-    this.photoUpload = photoUpload;
+    this.referenceImageManager = referenceImageManager;
     this.promptQueue = [];
     this.generationCount = 0;
     this.generationHistory = []; // Store complete generation parameters for reuse
@@ -25,16 +26,17 @@ export class ImageGenerator {
     };
     
     // DOM elements
-    this.contImage = DOMUtils.$("#created-img-container");
-    this.positiveInput = DOMUtils.$("#positive");
-    this.negativeInput = DOMUtils.$("#negative");
+    this.resultContainer = DOMUtils.$("#result-container");
+    this.positiveInput = DOMUtils.$("#positive-prompt");
+    this.negativeInput = DOMUtils.$("#negative-prompt");
     this.seedInput = DOMUtils.$("#seed");
-    this.generateBtn = DOMUtils.$("#generate");
+    this.generateBtn = DOMUtils.$("#generate-btn");
     this.results = DOMUtils.$("#results");
-    this.progressbar = DOMUtils.$("#main-progress");
+    this.progressbar = DOMUtils.$("#generation-progress");
     this.gallery = DOMUtils.$("#gallery-images");
 
-    this.sessionFolder = `gradio/session_${this.apiClient.clientId.slice(0, 8)}`;
+    // Output sub-folder (inside ComfyUI/output) for this browser session
+    this.sessionFolder = `prompting-heritage/session_${this.apiClient.clientId.slice(0, 8)}`;
     this.uploadedImageDimensions = null; // Store dimensions for proportional resizing
     
     this.setupEventListeners();
@@ -59,7 +61,7 @@ export class ImageGenerator {
     this.gallery.innerHTML = "";
     
     // Reset container state
-    this.contImage.classList.add("empty");
+    this.resultContainer.classList.add("empty");
     
     console.log("✅ ImageGenerator state reset");
   }
@@ -67,7 +69,7 @@ export class ImageGenerator {
   setupEventListeners() {
     this.generateBtn.addEventListener("click", () => this.handleGenerate());
     
-    const isRandomInput = DOMUtils.$("#randomSeed");
+    const isRandomInput = DOMUtils.$("#random-seed");
     if (isRandomInput) {
       isRandomInput.addEventListener("change", () => {
         this.seedInput.disabled = isRandomInput.checked;
@@ -80,17 +82,17 @@ export class ImageGenerator {
     
     try {
       // Scroll to image container
-      this.contImage.scrollIntoView({ behavior: "smooth" });
-      this.contImage.classList.remove("empty");
+      this.resultContainer.scrollIntoView({ behavior: "smooth" });
+      this.resultContainer.classList.remove("empty");
       this.progressbar.style.display = "block";
 
       // Check if we should use img2img mode
-      const useImg2Img = this.photoUpload && this.photoUpload.hasPhoto();
+      const useImg2Img = this.referenceImageManager && this.referenceImageManager.hasImage();
       let uploadedImageName = null;
 
       console.log("🔍 Generation mode check:", {
-        photoUploadExists: !!this.photoUpload,
-        hasPhoto: this.photoUpload ? this.photoUpload.hasPhoto() : false,
+        referenceImageManagerExists: !!this.referenceImageManager,
+        hasImage: this.referenceImageManager ? this.referenceImageManager.hasImage() : false,
         useImg2Img
       });
 
@@ -104,7 +106,7 @@ export class ImageGenerator {
           loadingText.textContent = "Uploading image for processing...";
         }
         
-        const selectedFile = this.photoUpload.getSelectedFile();
+        const selectedFile = this.referenceImageManager.getSelectedFile();
         if (!selectedFile) {
           throw new Error("Nessun file selezionato per img2img");
         }
@@ -121,7 +123,7 @@ export class ImageGenerator {
           
           // Ensure only filename is used (strip any path)
           uploadedImageName = uploadedImageName.split(/[\\/]/).pop();
-          this.photoUpload.setUploadedImageName(uploadedImageName);
+          this.referenceImageManager.setUploadedImageName(uploadedImageName);
           
           console.log(`✅ Image uploaded successfully: ${uploadedImageName}`);
           
@@ -191,17 +193,17 @@ export class ImageGenerator {
       }
 
       // Update seed display
-      this.seedInput.value = updatedWorkflow["3"].inputs.seed;
+      this.seedInput.value = updatedWorkflow[WORKFLOW_NODES.SAMPLER].inputs.seed;
 
       // Store complete generation parameters for reuse
       const generationParams = {
         positivePrompt: filteredPositive,
         negativePrompt: filteredNegative,
-        seed: updatedWorkflow["3"].inputs.seed,
+        seed: updatedWorkflow[WORKFLOW_NODES.SAMPLER].inputs.seed,
         settings: {
           ...settings,
           useCustomSeed: true,
-          customSeed: updatedWorkflow["3"].inputs.seed
+          customSeed: updatedWorkflow[WORKFLOW_NODES.SAMPLER].inputs.seed
         },
         mode: useImg2Img ? 'img2img' : 'text2img',
         uploadedImageName: uploadedImageName,
@@ -667,17 +669,17 @@ export class ImageGenerator {
       this.seedInput.value = generationParams.seed;
     }
     
-    // Restore settings in settings manager (filters)
+    // Restore settings in the settings modal
     if (generationParams.settings && this.settingsManager) {
       this.settingsManager.applySettings(generationParams.settings);
     }
     
     // Handle img2img mode
-    if (generationParams.mode === 'img2img' && generationParams.uploadedImageName && this.photoUpload) {
+    if (generationParams.mode === 'img2img' && generationParams.uploadedImageName && this.referenceImageManager) {
       console.log("🖼️ Attempting to restore img2img image:", generationParams.uploadedImageName);
       
       try {
-        const restored = await this.photoUpload.restoreImageFromServer(generationParams.uploadedImageName);
+        const restored = await this.referenceImageManager.restoreImageFromServer(generationParams.uploadedImageName);
         if (restored) {
           console.log("✅ Image restored automatically for img2img mode");
         } else {

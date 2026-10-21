@@ -1,5 +1,5 @@
-// WebSocket Handler Module
-export class WebSocketHandler {
+// ComfyUI WebSocket: receives progress/execution events for this client and forwards them to the ImageGenerator
+export class ComfyUISocket {
   constructor(clientId, imageGenerator) {
     this.clientId = clientId;
     this.imageGenerator = imageGenerator;

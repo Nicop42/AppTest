@@ -1,20 +1,16 @@
-// Style Management Module
+// Style Preset Module: renders the style thumbnails and merges the selected presets into the prompts
 import { DOMUtils } from './utils.js';
-import { STYLE_CONFIG, DISPLAY_CONFIG } from './styleConfig.js';
+import { STYLE_PRESETS, STYLE_LAYOUT } from './styleConfig.js';
 
 export class StyleManager {
   constructor() {
-    console.log("🔍 StyleManager constructor - STYLE_CONFIG:", STYLE_CONFIG);
-    console.log("🔍 StyleManager constructor - DISPLAY_CONFIG:", DISPLAY_CONFIG);
-    
-    // ✨ STYLES ARE NOW CONFIGURED IN styleConfig.js ✨
-    // Edit styleConfig.js to manage all your styles in one place!
-    this.styleConfig = STYLE_CONFIG;
-    this.displayConfig = DISPLAY_CONFIG;
+    // Presets and layout are configured in styleConfig.js
+    this.stylePresets = STYLE_PRESETS;
+    this.styleLayout = STYLE_LAYOUT;
 
-    // Convert to old format for compatibility (will be updated throughout the code)
+    // Simplified { prompt, name } view of the presets
     this.stylePrompts = {};
-    Object.entries(this.styleConfig).forEach(([key, config]) => {
+    Object.entries(this.stylePresets).forEach(([key, config]) => {
       this.stylePrompts[key] = {
         prompt: config.positivePrompt,
         name: config.name
@@ -28,7 +24,7 @@ export class StyleManager {
     this.negativeInput = null; // Will be set later when DOM is ready  
     this.primaryStylesContainer = null; // Will be set later when DOM is ready
     this.moreStylesContainer = null; // Will be set later when DOM is ready
-    this.toggleStili = null; // Will be set later when DOM is ready
+    this.toggleStylesButton = null; // Will be set later when DOM is ready
 
     this.initialize();
   }
@@ -54,11 +50,11 @@ export class StyleManager {
   }
 
   setupDOMReferences() {
-    this.positiveInput = DOMUtils.$("#positive");
-    this.negativeInput = DOMUtils.$("#negative");
+    this.positiveInput = DOMUtils.$("#positive-prompt");
+    this.negativeInput = DOMUtils.$("#negative-prompt");
     this.primaryStylesContainer = DOMUtils.$("#primary-styles");
     this.moreStylesContainer = DOMUtils.$("#more-styles");
-    this.toggleStili = DOMUtils.$("#toggle-styles");
+    this.toggleStylesButton = DOMUtils.$("#toggle-styles");
     console.log("🔍 DOM references set up");
   }
 
@@ -71,17 +67,17 @@ export class StyleManager {
     this.moreStylesContainer.innerHTML = '';
     
     // Generate primary styles
-    this.displayConfig.primaryStyles.forEach(styleId => {
-      if (this.styleConfig[styleId]) {
-        const styleButton = this.createStyleButton(styleId, this.styleConfig[styleId]);
+    this.styleLayout.primaryStyles.forEach(styleId => {
+      if (this.stylePresets[styleId]) {
+        const styleButton = this.createStyleButton(styleId, this.stylePresets[styleId]);
         this.primaryStylesContainer.appendChild(styleButton);
       }
     });
     
     // Generate more styles
-    this.displayConfig.moreStyles.forEach(styleId => {
-      if (this.styleConfig[styleId]) {
-        const styleButton = this.createStyleButton(styleId, this.styleConfig[styleId]);
+    this.styleLayout.moreStyles.forEach(styleId => {
+      if (this.stylePresets[styleId]) {
+        const styleButton = this.createStyleButton(styleId, this.stylePresets[styleId]);
         this.moreStylesContainer.appendChild(styleButton);
       }
     });
@@ -91,25 +87,25 @@ export class StyleManager {
 
   // ✨ NEW METHOD: Creates a single style button element
   createStyleButton(styleId, config) {
-    const stileBlock = document.createElement('div');
-    stileBlock.className = 'stile-block';
+    const styleCard = document.createElement('div');
+    styleCard.className = 'style-card';
     
     // Add cache-busting parameter to force image reload
     const timestamp = new Date().getTime();
     
-    stileBlock.innerHTML = `
-      <button type="button" data-stile="${styleId}" class="style-btn">
+    styleCard.innerHTML = `
+      <button type="button" data-style-id="${styleId}" class="style-btn">
         <img
-          src="images/${config.image}?t=${timestamp}"
+          src="images/styles/${config.image}?t=${timestamp}"
           alt="${config.name}"
           width="200"
           height="200"
         />
-        <span class="nome-stile">${config.name}</span>
+        <span class="thumbnail-label">${config.name}</span>
       </button>
     `;
     
-    return stileBlock;
+    return styleCard;
   }
 
   // ✨ UPDATED METHOD: Updates both images and names from the config (now regenerates everything)
@@ -127,14 +123,14 @@ export class StyleManager {
 
   setupEventListeners() {
     // Toggle styles visibility
-    this.toggleStili.addEventListener("click", (e) => {
+    this.toggleStylesButton.addEventListener("click", (e) => {
       e.preventDefault();
       const isHidden = this.moreStylesContainer.style.display === "none";
       if (isHidden) {
-        this.toggleStili.innerText = "Riduci stili";
+        this.toggleStylesButton.innerText = "Riduci stili";
         this.moreStylesContainer.style.display = "grid";
       } else {
-        this.toggleStili.innerText = "Scopri altri stili";
+        this.toggleStylesButton.innerText = "Scopri altri stili";
         this.moreStylesContainer.style.display = "none";
       }
     });
@@ -155,14 +151,14 @@ export class StyleManager {
   }
 
   handleStyleSelection(btn) {
-    const stileBlock = btn.closest(".stile-block");
-    const isActive = stileBlock.classList.contains("active");
-    const styleId = btn.dataset.stile;
-    const styleConfig = this.styleConfig[styleId];
+    const styleCard = btn.closest(".style-card");
+    const isActive = styleCard.classList.contains("active");
+    const styleId = btn.dataset.styleId;
+    const preset = this.stylePresets[styleId];
 
-    if (!styleConfig) return;
+    if (!preset) return;
 
-    stileBlock.classList.toggle("active");
+    styleCard.classList.toggle("active");
 
     if (!isActive) {
       this.selectedStyles.add(styleId);
@@ -182,7 +178,7 @@ export class StyleManager {
     let currentPrompt = this.positiveInput.value;
 
     // Remove all style prompts from current text
-    Object.entries(this.styleConfig).forEach(([id, config]) => {
+    Object.entries(this.stylePresets).forEach(([id, config]) => {
       if (currentPrompt.includes(config.positivePrompt)) {
         const regex = new RegExp(
           `\\s*,\\s*${config.positivePrompt.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}|${config.positivePrompt.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*,?\\s*`,
@@ -195,7 +191,7 @@ export class StyleManager {
     // Add back selected styles
     let newPrompt = currentPrompt;
     this.selectedStyles.forEach((id) => {
-      const config = this.styleConfig[id];
+      const config = this.stylePresets[id];
       if (config && config.positivePrompt) {
         newPrompt = newPrompt ? `${newPrompt}, ${config.positivePrompt}` : config.positivePrompt;
       }
@@ -208,7 +204,7 @@ export class StyleManager {
     let currentNegativePrompt = this.negativeInput.value;
 
     // Remove all negative style prompts from current text
-    Object.entries(this.styleConfig).forEach(([id, config]) => {
+    Object.entries(this.stylePresets).forEach(([id, config]) => {
       if (config.negativePrompt && currentNegativePrompt.includes(config.negativePrompt)) {
         const regex = new RegExp(
           `\\s*,\\s*${config.negativePrompt.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}|${config.negativePrompt.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*,?\\s*`,
@@ -221,7 +217,7 @@ export class StyleManager {
     // Add back selected negative prompts
     let newNegativePrompt = currentNegativePrompt;
     this.selectedStyles.forEach((id) => {
-      const config = this.styleConfig[id];
+      const config = this.stylePresets[id];
       if (config && config.negativePrompt) {
         newNegativePrompt = newNegativePrompt ? `${newNegativePrompt}, ${config.negativePrompt}` : config.negativePrompt;
       }
@@ -233,7 +229,7 @@ export class StyleManager {
   getSelectedStylesPrompt() {
     const selectedPrompts = [];
     this.selectedStyles.forEach((id) => {
-      const config = this.styleConfig[id];
+      const config = this.stylePresets[id];
       if (config && config.positivePrompt) {
         selectedPrompts.push(config.positivePrompt);
       }
@@ -245,7 +241,7 @@ export class StyleManager {
   getSelectedNegativePrompts() {
     const selectedNegativePrompts = [];
     this.selectedStyles.forEach((id) => {
-      const config = this.styleConfig[id];
+      const config = this.stylePresets[id];
       if (config && config.negativePrompt) {
         selectedNegativePrompts.push(config.negativePrompt);
       }
@@ -254,18 +250,18 @@ export class StyleManager {
   }
 
   // ✨ NEW METHOD: Get style config for easy editing
-  getStyleConfig() {
-    return this.styleConfig;
+  getStylePresets() {
+    return this.stylePresets;
   }
 
   // ✨ NEW METHOD: Update a specific style config and refresh UI
-  updateStyleConfig(styleId, newConfig) {
-    if (this.styleConfig[styleId]) {
-      this.styleConfig[styleId] = { ...this.styleConfig[styleId], ...newConfig };
+  updateStylePreset(styleId, newConfig) {
+    if (this.stylePresets[styleId]) {
+      this.stylePresets[styleId] = { ...this.stylePresets[styleId], ...newConfig };
       // Update the compatibility object
       this.stylePrompts[styleId] = {
-        prompt: this.styleConfig[styleId].positivePrompt,
-        name: this.styleConfig[styleId].name
+        prompt: this.stylePresets[styleId].positivePrompt,
+        name: this.stylePresets[styleId].name
       };
       // Refresh the UI
       this.updateStyleElements();
@@ -274,16 +270,16 @@ export class StyleManager {
   }
 
   // ✨ NEW METHOD: Add a new style dynamically
-  addNewStyle(styleId, config) {
-    this.styleConfig[styleId] = config;
+  addStylePreset(styleId, config) {
+    this.stylePresets[styleId] = config;
     this.stylePrompts[styleId] = {
       prompt: config.positivePrompt,
       name: config.name
     };
     
     // Add to display config (you can customize where it goes)
-    if (!this.displayConfig.moreStyles.includes(styleId)) {
-      this.displayConfig.moreStyles.push(styleId);
+    if (!this.styleLayout.moreStyles.includes(styleId)) {
+      this.styleLayout.moreStyles.push(styleId);
     }
     
     // Refresh the UI
@@ -292,14 +288,14 @@ export class StyleManager {
   }
 
   // ✨ NEW METHOD: Remove a style dynamically
-  removeStyle(styleId) {
-    if (this.styleConfig[styleId]) {
-      delete this.styleConfig[styleId];
+  removeStylePreset(styleId) {
+    if (this.stylePresets[styleId]) {
+      delete this.stylePresets[styleId];
       delete this.stylePrompts[styleId];
       
       // Remove from display config
-      this.displayConfig.primaryStyles = this.displayConfig.primaryStyles.filter(id => id !== styleId);
-      this.displayConfig.moreStyles = this.displayConfig.moreStyles.filter(id => id !== styleId);
+      this.styleLayout.primaryStyles = this.styleLayout.primaryStyles.filter(id => id !== styleId);
+      this.styleLayout.moreStyles = this.styleLayout.moreStyles.filter(id => id !== styleId);
       
       // Remove from selected styles if it was selected
       this.selectedStyles.delete(styleId);
